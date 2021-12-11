@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoSerializer", "AutoSerializer\AutoSerializer.csproj", "{9FF1CAFC-570D-4F07-829A-5AC755EA7EB4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoSerializer.Definitions", "AutoSerializer.Definitions\AutoSerializer.Definitions.csproj", "{069D8499-05BB-42FF-9F7E-4333AADBF4AF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9FF1CAFC-570D-4F07-829A-5AC755EA7EB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9FF1CAFC-570D-4F07-829A-5AC755EA7EB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9FF1CAFC-570D-4F07-829A-5AC755EA7EB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9FF1CAFC-570D-4F07-829A-5AC755EA7EB4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{069D8499-05BB-42FF-9F7E-4333AADBF4AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{069D8499-05BB-42FF-9F7E-4333AADBF4AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{069D8499-05BB-42FF-9F7E-4333AADBF4AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{069D8499-05BB-42FF-9F7E-4333AADBF4AF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
