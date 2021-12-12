@@ -138,12 +138,24 @@ namespace AutoSerializer.Definitions
 
         public static void ExWrite(this MemoryStream stream, string value)
         {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+            
             stream.ExWrite(value.Length);
             stream.ExWrite(value, value.Length);
         }
 
         public static void ExWrite(this MemoryStream stream, string[] value)
         {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+            
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -153,6 +165,12 @@ namespace AutoSerializer.Definitions
 
         public static void ExWrite(this MemoryStream stream, bool[] value)
         {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+            
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -162,6 +180,12 @@ namespace AutoSerializer.Definitions
 
         public static void ExWrite(this MemoryStream stream, byte[] value)
         {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+            
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -171,6 +195,12 @@ namespace AutoSerializer.Definitions
 
         public static void ExWrite(this MemoryStream stream, sbyte[] value)
         {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+            
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -180,6 +210,12 @@ namespace AutoSerializer.Definitions
 
         public static void ExWrite(this MemoryStream stream, short[] value)
         {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+            
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -189,6 +225,12 @@ namespace AutoSerializer.Definitions
 
         public static void ExWrite(this MemoryStream stream, ushort[] value)
         {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+            
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -198,6 +240,12 @@ namespace AutoSerializer.Definitions
 
         public static void ExWrite(this MemoryStream stream, int[] value)
         {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+            
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -207,6 +255,12 @@ namespace AutoSerializer.Definitions
 
         public static void ExWrite(this MemoryStream stream, uint[] value)
         {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+            
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -216,6 +270,12 @@ namespace AutoSerializer.Definitions
 
         public static void ExWrite(this MemoryStream stream, long[] value)
         {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+            
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -225,6 +285,12 @@ namespace AutoSerializer.Definitions
 
         public static void ExWrite(this MemoryStream stream, ulong[] value)
         {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+            
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -234,6 +300,12 @@ namespace AutoSerializer.Definitions
 
         public static void ExWrite(this MemoryStream stream, float[] value)
         {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+            
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
