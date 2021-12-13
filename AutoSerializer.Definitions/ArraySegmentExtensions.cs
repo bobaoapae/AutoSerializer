@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
@@ -74,6 +75,13 @@ namespace AutoSerializer.Definitions
         public static void Read(this ArraySegment<byte> buffer, ref int offset, in int size, out byte[] value)
         {
             value = new byte[size];
+            Array.ConstrainedCopy(buffer.Array, offset, value, 0, size);
+            offset += size;
+        }
+
+        public static void Read(this ArraySegment<byte> buffer, ref int offset, in int size, out sbyte[] value)
+        {
+            value = new sbyte[size];
             Array.ConstrainedCopy(buffer.Array, offset, value, 0, size);
             offset += size;
         }
@@ -167,6 +175,12 @@ namespace AutoSerializer.Definitions
             buffer.Read(ref offset, arrayLen, out value);
         }
 
+        public static void Read(this ArraySegment<byte> buffer, ref int offset, out sbyte[] value)
+        {
+            buffer.Read(ref offset, out int arrayLen);
+            buffer.Read(ref offset, arrayLen, out value);
+        }
+
         public static void Read(this ArraySegment<byte> buffer, ref int offset, out int[] value)
         {
             buffer.Read(ref offset, out int arrayLen);
@@ -217,6 +231,116 @@ namespace AutoSerializer.Definitions
             {
                 buffer.Read(ref offset, out string val);
                 value[i] = val;
+            }
+        }
+
+        public static void Read(this ArraySegment<byte> buffer, ref int offset, out List<byte> value)
+        {
+            buffer.Read(ref offset, out int arrayLen);
+            value = new List<byte>(arrayLen);
+            for (int i = 0; i < arrayLen; i++)
+            {
+                buffer.Read(ref offset, out byte val);
+                value.Add(val);
+            }
+        }
+
+        public static void Read(this ArraySegment<byte> buffer, ref int offset, out List<sbyte> value)
+        {
+            buffer.Read(ref offset, out int arrayLen);
+            value = new List<sbyte>(arrayLen);
+            for (int i = 0; i < arrayLen; i++)
+            {
+                buffer.Read(ref offset, out sbyte val);
+                value.Add(val);
+            }
+        }
+
+        public static void Read(this ArraySegment<byte> buffer, ref int offset, out List<int> value)
+        {
+            buffer.Read(ref offset, out int arrayLen);
+            value = new List<int>(arrayLen);
+            for (int i = 0; i < arrayLen; i++)
+            {
+                buffer.Read(ref offset, out int val);
+                value.Add(val);
+            }
+        }
+
+        public static void Read(this ArraySegment<byte> buffer, ref int offset, out List<uint> value)
+        {
+            buffer.Read(ref offset, out int arrayLen);
+            value = new List<uint>(arrayLen);
+            for (int i = 0; i < arrayLen; i++)
+            {
+                buffer.Read(ref offset, out uint val);
+                value.Add(val);
+            }
+        }
+
+        public static void Read(this ArraySegment<byte> buffer, ref int offset, out List<short> value)
+        {
+            buffer.Read(ref offset, out int arrayLen);
+            value = new List<short>(arrayLen);
+            for (int i = 0; i < arrayLen; i++)
+            {
+                buffer.Read(ref offset, out short val);
+                value.Add(val);
+            }
+        }
+
+        public static void Read(this ArraySegment<byte> buffer, ref int offset, out List<ushort> value)
+        {
+            buffer.Read(ref offset, out int arrayLen);
+            value = new List<ushort>(arrayLen);
+            for (int i = 0; i < arrayLen; i++)
+            {
+                buffer.Read(ref offset, out ushort val);
+                value.Add(val);
+            }
+        }
+
+        public static void Read(this ArraySegment<byte> buffer, ref int offset, out List<long> value)
+        {
+            buffer.Read(ref offset, out int arrayLen);
+            value = new List<long>(arrayLen);
+            for (int i = 0; i < arrayLen; i++)
+            {
+                buffer.Read(ref offset, out long val);
+                value.Add(val);
+            }
+        }
+
+        public static void Read(this ArraySegment<byte> buffer, ref int offset, out List<ulong> value)
+        {
+            buffer.Read(ref offset, out int arrayLen);
+            value = new List<ulong>(arrayLen);
+            for (int i = 0; i < arrayLen; i++)
+            {
+                buffer.Read(ref offset, out ulong val);
+                value.Add(val);
+            }
+        }
+
+        public static void Read(this ArraySegment<byte> buffer, ref int offset, out List<float> value)
+        {
+            buffer.Read(ref offset, out int arrayLen);
+            value = new List<float>(arrayLen);
+            for (int i = 0; i < arrayLen; i++)
+            {
+                buffer.Read(ref offset, out float val);
+                value.Add(val);
+            }
+        }
+
+        public static void Read(this ArraySegment<byte> buffer, ref int offset, out List<string> value)
+        {
+            buffer.Read(ref offset, out int arrayLen);
+            value = new List<string>(arrayLen);
+            for (int i = 0; i < arrayLen; i++)
+            {
+                buffer.Read(ref offset, out string val);
+                value.Add(val);
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -143,7 +144,7 @@ namespace AutoSerializer.Definitions
                 stream.ExWrite(0);
                 return;
             }
-            
+
             stream.ExWrite(value.Length);
             stream.ExWrite(value, value.Length);
         }
@@ -155,7 +156,7 @@ namespace AutoSerializer.Definitions
                 stream.ExWrite(0);
                 return;
             }
-            
+
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -170,7 +171,7 @@ namespace AutoSerializer.Definitions
                 stream.ExWrite(0);
                 return;
             }
-            
+
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -185,7 +186,7 @@ namespace AutoSerializer.Definitions
                 stream.ExWrite(0);
                 return;
             }
-            
+
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -200,7 +201,7 @@ namespace AutoSerializer.Definitions
                 stream.ExWrite(0);
                 return;
             }
-            
+
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -215,7 +216,7 @@ namespace AutoSerializer.Definitions
                 stream.ExWrite(0);
                 return;
             }
-            
+
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -230,7 +231,7 @@ namespace AutoSerializer.Definitions
                 stream.ExWrite(0);
                 return;
             }
-            
+
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -245,7 +246,7 @@ namespace AutoSerializer.Definitions
                 stream.ExWrite(0);
                 return;
             }
-            
+
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -260,7 +261,7 @@ namespace AutoSerializer.Definitions
                 stream.ExWrite(0);
                 return;
             }
-            
+
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -275,7 +276,7 @@ namespace AutoSerializer.Definitions
                 stream.ExWrite(0);
                 return;
             }
-            
+
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -290,7 +291,7 @@ namespace AutoSerializer.Definitions
                 stream.ExWrite(0);
                 return;
             }
-            
+
             stream.ExWrite(value.Length);
             foreach (var s in value)
             {
@@ -305,8 +306,173 @@ namespace AutoSerializer.Definitions
                 stream.ExWrite(0);
                 return;
             }
-            
+
             stream.ExWrite(value.Length);
+            foreach (var s in value)
+            {
+                stream.ExWrite(s);
+            }
+        }
+
+        public static void ExWrite(this MemoryStream stream, List<string> value)
+        {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+
+            stream.ExWrite(value.Count);
+            foreach (var s in value)
+            {
+                stream.ExWrite(s);
+            }
+        }
+
+        public static void ExWrite(this MemoryStream stream, List<bool> value)
+        {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+
+            stream.ExWrite(value.Count);
+            foreach (var s in value)
+            {
+                stream.ExWrite(s);
+            }
+        }
+
+        public static void ExWrite(this MemoryStream stream, List<byte> value)
+        {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+
+            stream.ExWrite(value.Count);
+            foreach (var s in value)
+            {
+                stream.ExWrite(s);
+            }
+        }
+
+        public static void ExWrite(this MemoryStream stream, List<sbyte> value)
+        {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+
+            stream.ExWrite(value.Count);
+            foreach (var s in value)
+            {
+                stream.ExWrite(s);
+            }
+        }
+
+        public static void ExWrite(this MemoryStream stream, List<short> value)
+        {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+
+            stream.ExWrite(value.Count);
+            foreach (var s in value)
+            {
+                stream.ExWrite(s);
+            }
+        }
+
+        public static void ExWrite(this MemoryStream stream, List<ushort> value)
+        {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+
+            stream.ExWrite(value.Count);
+            foreach (var s in value)
+            {
+                stream.ExWrite(s);
+            }
+        }
+
+        public static void ExWrite(this MemoryStream stream, List<int> value)
+        {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+
+            stream.ExWrite(value.Count);
+            foreach (var s in value)
+            {
+                stream.ExWrite(s);
+            }
+        }
+
+        public static void ExWrite(this MemoryStream stream, List<uint> value)
+        {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+
+            stream.ExWrite(value.Count);
+            foreach (var s in value)
+            {
+                stream.ExWrite(s);
+            }
+        }
+
+        public static void ExWrite(this MemoryStream stream, List<long> value)
+        {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+
+            stream.ExWrite(value.Count);
+            foreach (var s in value)
+            {
+                stream.ExWrite(s);
+            }
+        }
+
+        public static void ExWrite(this MemoryStream stream, List<ulong> value)
+        {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+
+            stream.ExWrite(value.Count);
+            foreach (var s in value)
+            {
+                stream.ExWrite(s);
+            }
+        }
+
+        public static void ExWrite(this MemoryStream stream, List<float> value)
+        {
+            if (value == null)
+            {
+                stream.ExWrite(0);
+                return;
+            }
+
+            stream.ExWrite(value.Count);
             foreach (var s in value)
             {
                 stream.ExWrite(s);
