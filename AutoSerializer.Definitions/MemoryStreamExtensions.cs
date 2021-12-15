@@ -87,7 +87,7 @@ namespace AutoSerializer.Definitions
             if (!BitConverter.IsLittleEndian)
                 Array.Reverse(src);
 
-            stream.ExWrite(src, 0, src.Length);
+            stream.Write(src, 0, src.Length);
         }
 
         public static void ExWrite(this MemoryStream stream, string value, in int length, in int offset = 0)
