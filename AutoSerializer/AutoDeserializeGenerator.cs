@@ -28,8 +28,6 @@ namespace AutoSerializer
 
         public void Execute(GeneratorExecutionContext context)
         {
-            var rand = new Random();
-
             if (!(context.SyntaxReceiver is SyntaxReceiver receiver))
             {
                 return;
@@ -63,7 +61,7 @@ namespace AutoSerializer
                     {
                         context.ReportDiagnostic(Diagnostic.Create(
                             new DiagnosticDescriptor(
-                                "AG0001",
+                                "ADG0001",
                                 "Invalid Resource",
                                 $"Cannot find {ResourceName} resource",
                                 "",
@@ -74,26 +72,45 @@ namespace AutoSerializer
 
                     var namespaceName = classSymbol.ContainingNamespace.ToDisplayString();
 
-                    var attributeData = classSymbol?.GetAttributes().First(ad => ad.AttributeClass?.Name == attributeSymbol?.Name);
-                    var isDynamic = attributeData.NamedArguments.Length > 0 && (bool)attributeData.NamedArguments.First().Value.Value;
+                    var attributeData = classSymbol?.GetAttributes()
+                        .First(ad => ad.AttributeClass?.Name == attributeSymbol?.Name);
+                    var isDynamic = attributeData.NamedArguments.Length > 0 &&
+                                    (bool) attributeData.NamedArguments.First().Value.Value;
 
                     var dynamicFieldContent = isDynamic ? "public byte[] DynamicData { get; set; }" : string.Empty;
 
-                    var resourceContent = new StreamReader(resourceStream).ReadToEnd();
-                    resourceContent = string.Format(resourceContent,
-                        namespaceName,
-                        classSymbol.Name,
-                        GenerateDeserializeContent(context, attributeSymbol, classSymbol, isDynamic),
-                        classSymbol.BaseType.Name != "Object" ? classSymbol.BaseType.ToString() : "IAutoDeserialize",
-                        classSymbol.BaseType.Name != "Object" ? "override" : "virtual",
-                        dynamicFieldContent);
+                    try
+                    {
+                        var resourceContent = new StreamReader(resourceStream).ReadToEnd();
+                        resourceContent = string.Format(resourceContent,
+                            namespaceName,
+                            classSymbol.Name,
+                            GenerateDeserializeContent(context, attributeSymbol, classSymbol, isDynamic),
+                            classSymbol.BaseType.Name != "Object" ? classSymbol.BaseType.ToString() : "IAutoDeserialize",
+                            classSymbol.BaseType.Name != "Object" ? "override" : "virtual",
+                            dynamicFieldContent);
 
-                    context.AddSource($"{namespaceName}.{classSymbol.Name}.g.cs", SourceText.From(resourceContent, Encoding.UTF8));
+                        context.AddSource($"{namespaceName}.{classSymbol.Name}.g.cs",
+                            SourceText.From(resourceContent, Encoding.UTF8));
+                    }
+                    catch (Exception e)
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(
+                            new DiagnosticDescriptor(
+                                "ADG0002",
+                                "Unexpected Error",
+                                $"Unexpected Error: {e}",
+                                "",
+                                DiagnosticSeverity.Error,
+                                true),
+                            null));
+                    }
                 }
             }
         }
 
-        private static string GenerateDeserializeContent(GeneratorExecutionContext context, INamedTypeSymbol attribute, INamedTypeSymbol symbol, bool isDynamic)
+        private static string GenerateDeserializeContent(GeneratorExecutionContext context, INamedTypeSymbol attribute,
+            INamedTypeSymbol symbol, bool isDynamic)
         {
             var builder = new StringBuilder();
 
@@ -102,7 +119,7 @@ namespace AutoSerializer
             {
                 if (item is IPropertySymbol itemProperty && itemProperty.DeclaredAccessibility == Accessibility.Public)
                 {
-                    fieldSymbols.Add((IPropertySymbol)item);
+                    fieldSymbols.Add((IPropertySymbol) item);
                 }
             }
 
@@ -130,10 +147,63 @@ namespace AutoSerializer
                     tabSpace++;
                 }
 
-                if (fieldSymbol.Type.IsValueType)
+                var actualBytesFieldName = $"actualBytes_{fieldSymbol.Name}";
+                var readBytesFieldName = $"readBytes_{fieldSymbol.Name}";
+                var remainingBytesFieldName = $"remainingBytes_{fieldSymbol.Name}";
+                
+                if (fixedLen != null)
                 {
-                    var nameSymbol = (INamedTypeSymbol)fieldSymbol.Type;
-                    if (nameSymbol.EnumUnderlyingType != null)
+                    builder.AppendLine();
+                    builder.Append('\t', tabSpace).AppendLine($"int {actualBytesFieldName} = (int)offset;");
+                }
+
+                if (AutoSerializerUtils.NeedUseAutoSerializeOrDeserialize(fieldSymbol.Type))
+                {
+                    if (fieldSymbol.Type is IArrayTypeSymbol || AutoSerializerUtils.IsList(fieldSymbol.Type))
+                    {
+                        var isArray = fieldSymbol.Type is IArrayTypeSymbol;
+                        var genericType = isArray? ((IArrayTypeSymbol)fieldSymbol.Type).ElementType : ((INamedTypeSymbol) fieldSymbol.Type).TypeArguments[0];
+                        
+                        if (fixedLen == null)
+                        {
+                            builder.Append('\t', tabSpace)
+                                .AppendLine($"buffer.Read(ref offset, out int len_{fieldSymbol.Name});");
+                            builder.Append('\t', tabSpace).AppendLine($"{fieldSymbol.Name} = new(len_{fieldSymbol.Name});");
+                            builder.Append('\t', tabSpace).AppendLine($"for (var i = 0; i < len_{fieldSymbol.Name}; i++)");
+                        }
+                        else
+                        {
+                            builder.Append('\t', tabSpace).AppendLine($"{fieldSymbol.Name} = new({fixedLen});");
+                            builder.Append('\t', tabSpace).AppendLine($"for (var i = 0; i < {fixedLen}; i++)");
+                        }
+
+                        builder.Append('\t', tabSpace).AppendLine("{");
+
+                        builder.Append('\t', tabSpace + 1)
+                            .AppendLine($"var instance_{fieldSymbol.Name} = new {genericType}();");
+                            
+                        if(isArray)
+                            builder.AppendLine($"{fieldSymbol.Name}[i] = instance_{fieldSymbol.Name};");
+                        else
+                            builder.AppendLine($"{fieldSymbol.Name}.Add(instance_{fieldSymbol.Name});");
+                            
+                        builder.Append('\t', tabSpace + 1)
+                            .AppendLine($"instance_{fieldSymbol.Name}.Deserialize(in buffer, ref offset);");
+                        
+                        builder.Append('\t', tabSpace).AppendLine("}").AppendLine();
+                    }
+                    else
+                    {
+                        builder.Append('\t', tabSpace)
+                            .AppendLine($"var instance_{fieldSymbol.Name} = new {fieldSymbol.Type}();");
+                        builder.Append('\t', tabSpace).AppendLine($"{fieldSymbol.Name} = instance_{fieldSymbol.Name};");
+                        builder.Append('\t', tabSpace)
+                            .AppendLine($"instance_{fieldSymbol.Name}.Deserialize(in buffer, ref offset);");
+                    }
+                }
+                else
+                {
+                    if (fieldSymbol.Type is INamedTypeSymbol {EnumUnderlyingType: { }} nameSymbol)
                     {
                         builder.Append('\t', tabSpace)
                             .AppendLine(
@@ -144,111 +214,30 @@ namespace AutoSerializer
                     }
                     else
                     {
-                        builder.Append('\t', tabSpace)
-                            .AppendLine($"buffer.Read(ref offset, out {fieldSymbol.Type} read_{fieldSymbol.Name});");
+                        if (fieldSymbol.Type is IArrayTypeSymbol && fixedLen!=null)
+                        {
+                            builder.Append('\t', tabSpace)
+                                .AppendLine($"buffer.Read(ref offset, {fixedLen}, out {fieldSymbol.Type} read_{fieldSymbol.Name});");
+                        }
+                        else
+                        {
+                            builder.Append('\t', tabSpace)
+                                .AppendLine($"buffer.Read(ref offset, out {fieldSymbol.Type} read_{fieldSymbol.Name});");
+                        }
                         builder.Append('\t', tabSpace).AppendLine($"{fieldSymbol.Name} = read_{fieldSymbol.Name};");
                     }
                 }
-                else if (fieldSymbol.Type.ToString() == "string" || fieldSymbol.Type.ToString().EndsWith("[]"))
-                {
-                    if (fieldSymbol.Type.ToString().EndsWith("[]") && fixedLen == null)
-                    {
-                        context.ReportDiagnostic(Diagnostic.Create(
-                            new DiagnosticDescriptor(
-                                "ADG0002",
-                                "Missing [FieldLengthAttribute]",
-                                "Property {0} of type {1} miss [FieldLengthAttribute]",
-                                "type-not-supported",
-                                DiagnosticSeverity.Error,
-                                true), fieldSymbol.Locations.FirstOrDefault(), fieldSymbol.Name, fieldSymbol.Type));
-                        continue;
-                    }
-
-                    if (fixedLen == null)
-                    {
-                        builder.Append('\t', tabSpace)
-                            .AppendLine($"buffer.Read(ref offset, out {fieldSymbol.Type} read_{fieldSymbol.Name});");
-                        builder.Append('\t', tabSpace).AppendLine($"{fieldSymbol.Name} = read_{fieldSymbol.Name};");
-                    }
-                    else
-                    {
-                        builder.Append('\t', tabSpace)
-                            .AppendLine(
-                                $"buffer.Read(ref offset, {fixedLen}, out {fieldSymbol.Type} read_{fieldSymbol.Name});")
-                            .AppendLine();
-                        builder.Append('\t', tabSpace).AppendLine($"{fieldSymbol.Name} = read_{fieldSymbol.Name};")
-                            .AppendLine();
-                    }
-                }
-                else if (fieldSymbol.Type.Name == "List")
-                {
-                    var genericType = ((INamedTypeSymbol)fieldSymbol.Type).TypeArguments[0];
-
-                    if (!genericType.IsValueType &&
-                        !genericType.GetAttributes().Any(x => x.AttributeClass?.Name == attribute?.Name))
-                    {
-                        context.ReportDiagnostic(Diagnostic.Create(
-                            new DiagnosticDescriptor(
-                                "ADG0001",
-                                "List is of a type not supported",
-                                "List {0} of type {1} it's not supported",
-                                "type-not-supported",
-                                DiagnosticSeverity.Error,
-                                true), fieldSymbol.Locations.FirstOrDefault(), fieldSymbol.Name, genericType));
-                        continue;
-                    }
-
-                    builder.Append('\t', tabSpace).AppendLine($"{fieldSymbol.Name} = new({fixedLen});");
-
-                    if (fixedLen == null)
-                    {
-                        builder.Append('\t', tabSpace).AppendLine($"buffer.Read(ref offset, out int len_{fieldSymbol.Name});");
-                        builder.Append('\t', tabSpace).AppendLine($"for (var i = 0; i < len_{fieldSymbol.Name}; i++)");
-                    }
-                    else
-                    {
-                        builder.Append('\t', tabSpace).AppendLine($"for (var i = 0; i < {fixedLen}; i++)");
-                    }
-
-                    builder.Append('\t', tabSpace).AppendLine("{");
-
-                    if (genericType.IsValueType)
-                    {
-                        builder.Append('\t', tabSpace + 1)
-                            .AppendLine($"buffer.Read(ref offset, out {genericType} read_{fieldSymbol.Name});");
-                        builder.Append('\t', tabSpace + 1)
-                            .AppendLine($"{fieldSymbol.Name}.Add(read_{fieldSymbol.Name});");
-                    }
-                    else
-                    {
-                        builder.Append('\t', tabSpace + 1)
-                            .AppendLine($"var instance_{fieldSymbol.Name} = new {genericType}();");
-                        builder.Append('\t', tabSpace + 1)
-                            .AppendLine($"{fieldSymbol.Name}.Add(instance_{fieldSymbol.Name});");
-                        builder.Append('\t', tabSpace + 1)
-                            .AppendLine($"instance_{fieldSymbol.Name}.Deserialize(in buffer, ref offset);");
-                    }
-
-                    builder.Append('\t', tabSpace).AppendLine("}").AppendLine();
-                }
-                else if (fieldSymbol.Type.GetAttributes().Any(x => x.AttributeClass?.Name == attribute?.Name))
+                
+                if (fixedLen != null)
                 {
                     builder.Append('\t', tabSpace)
-                        .AppendLine($"var instance_{fieldSymbol.Name} = new {fieldSymbol.Type}();");
-                    builder.Append('\t', tabSpace).AppendLine($"{fieldSymbol.Name} = instance_{fieldSymbol.Name};");
+                        .AppendLine($"int {readBytesFieldName} = (int)(offset - {actualBytesFieldName});");
                     builder.Append('\t', tabSpace)
-                        .AppendLine($"instance_{fieldSymbol.Name}.Deserialize(in buffer, ref offset);");
-                }
-                else
-                {
-                    context.ReportDiagnostic(Diagnostic.Create(
-                        new DiagnosticDescriptor(
-                            "ADG0001",
-                            "Type not supported",
-                            "Property {0} of type {1} it's not supported",
-                            "type-not-supported",
-                            DiagnosticSeverity.Error,
-                            true), fieldSymbol.Locations.FirstOrDefault(), fieldSymbol.Name, fieldSymbol.Type));
+                        .AppendLine($"int {remainingBytesFieldName} = {fixedLen} - {readBytesFieldName};");
+
+                    builder.Append('\t', tabSpace).AppendLine($"if ({remainingBytesFieldName} > 0)");
+                    builder.Append('\t', ++tabSpace).AppendLine($"buffer.Read(ref offset, {remainingBytesFieldName}, out byte[] {remainingBytesFieldName}_data);")
+                        .AppendLine();
                 }
 
                 if (serializeWhenExpression != null)
@@ -259,7 +248,8 @@ namespace AutoSerializer
 
             if (isDynamic)
             {
-                builder.Append('\t', 3).AppendLine($"buffer.Read(ref offset, buffer.Count - offset, out byte[] read_dynamicData);");
+                builder.Append('\t', 3)
+                    .AppendLine($"buffer.Read(ref offset, buffer.Count - offset, out byte[] read_dynamicData);");
                 builder.Append('\t', 3).AppendLine($"DynamicData = read_dynamicData;");
             }
 
