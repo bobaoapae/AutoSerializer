@@ -214,7 +214,7 @@ namespace AutoSerializer
                     }
                     else
                     {
-                        if (fieldSymbol.Type is IArrayTypeSymbol && fixedLen!=null)
+                        if ((fieldSymbol.Type.ToString() == "string" || fieldSymbol.Type is IArrayTypeSymbol) && fixedLen!=null)
                         {
                             builder.Append('\t', tabSpace)
                                 .AppendLine($"buffer.Read(ref offset, {fixedLen}, out {fieldSymbol.Type} read_{fieldSymbol.Name});");

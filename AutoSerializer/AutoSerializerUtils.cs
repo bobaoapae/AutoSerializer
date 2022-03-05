@@ -3,13 +3,15 @@ using Microsoft.CodeAnalysis;
 
 namespace AutoSerializer;
 
-public class AutoSerializerUtils
+public static class AutoSerializerUtils
 {
     public static bool NeedUseAutoSerializeOrDeserialize(ITypeSymbol typeSymbol)
     {
         if (typeSymbol is INamedTypeSymbol namedTypeSymbol)
         {
-            if (namedTypeSymbol.GetAttributes().Any(symbol => symbol.AttributeClass?.Name is "AutoSerializeAttribute") || namedTypeSymbol.GetAttributes().Any(symbol => symbol.AttributeClass?.Name is "AutoDeserializeAttribute"))
+            if (namedTypeSymbol.GetAttributes()
+                    .Any(symbol => symbol.AttributeClass?.Name is "AutoSerializeAttribute") || namedTypeSymbol
+                    .GetAttributes().Any(symbol => symbol.AttributeClass?.Name is "AutoDeserializeAttribute"))
             {
                 return true;
             }
@@ -23,12 +25,13 @@ public class AutoSerializerUtils
         {
             return NeedUseAutoSerializeOrDeserialize(arrayTypeSymbol.ElementType);
         }
-            
+
         return false;
     }
 
     public static bool IsList(ITypeSymbol typeSymbol)
     {
-        return typeSymbol.Name == "List";
+        return typeSymbol.AllInterfaces.Any(symbol =>
+            symbol.Name == "ICollection" || symbol.Name == "IReadOnlyCollection`1");
     }
 }
