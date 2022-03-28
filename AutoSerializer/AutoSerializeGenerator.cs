@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -11,90 +12,83 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace AutoSerializer
 {
-    [Generator]
-    public class AutoSerializeGenerator : ISourceGenerator
+    public class AutoSerializeGenerator
     {
-        public void Initialize(GeneratorInitializationContext context)
+        public static void Generate(Compilation compilation, ImmutableArray<ClassDeclarationSyntax> classes, SourceProductionContext context)
         {
-            //Debugger.Launch();
-            context.RegisterForSyntaxNotifications(() => new SyntaxReceiver());
-        }
-
-        public void Execute(GeneratorExecutionContext context)
-        {
-            var rand = new Random();
-            if (!(context.SyntaxReceiver is SyntaxReceiver receiver))
+            if (classes.IsDefaultOrEmpty)
             {
+                // nothing to do yet
                 return;
             }
 
-            var compilation = context.Compilation;
-
-            var attributeSymbol =
-                compilation.GetTypeByMetadataName("AutoSerializer.Definitions.AutoSerializeAttribute");
-
-            var classSymbols = new List<INamedTypeSymbol>();
-            foreach (ClassDeclarationSyntax cls in receiver.CandidateClasses)
+            try
             {
-                var model = compilation.GetSemanticModel(cls.SyntaxTree);
+                var attributeSymbol =
+                    compilation.GetTypeByMetadataName("AutoSerializer.Definitions.AutoSerializeAttribute");
 
-                var classSymbol = model.GetDeclaredSymbol(cls);
-                if (classSymbol?.GetAttributes().Any(ad => ad.AttributeClass?.Name == attributeSymbol?.Name) ?? false)
+                var distinctClasses = classes.Distinct();
+
+                var classSymbols = new List<INamedTypeSymbol>();
+                foreach (ClassDeclarationSyntax cls in distinctClasses)
                 {
-                    classSymbols.Add(classSymbol);
-                }
-            }
+                    var model = compilation.GetSemanticModel(cls.SyntaxTree);
 
-            foreach (var classSymbol in classSymbols)
-            {
-                var autoSerializerAssembly = Assembly.GetExecutingAssembly();
-
-                const string ResourceName = "AutoSerializer.Resources.AutoSerializeClass.cs";
-                using (var resourceStream = autoSerializerAssembly.GetManifestResourceStream(ResourceName))
-                {
-                    if (resourceStream == null)
+                    var classSymbol = model.GetDeclaredSymbol(cls);
+                    if (classSymbol?.GetAttributes().Any(ad => ad.AttributeClass?.Name == attributeSymbol?.Name) ?? false)
                     {
-                        context.ReportDiagnostic(Diagnostic.Create(
-                            new DiagnosticDescriptor(
-                                "ASG0001",
-                                "Invalid Resource",
-                                $"Cannot find {ResourceName} resource",
-                                "",
-                                DiagnosticSeverity.Error,
-                                true),
-                            null));
+                        classSymbols.Add(classSymbol);
                     }
+                }
 
-                    var namespaceName = classSymbol.ContainingNamespace.ToDisplayString();
+                foreach (var classSymbol in classSymbols)
+                {
+                    var autoSerializerAssembly = Assembly.GetExecutingAssembly();
 
-                    try
+                    const string ResourceName = "AutoSerializer.Resources.AutoSerializeClass.cs";
+                    using (var resourceStream = autoSerializerAssembly.GetManifestResourceStream(ResourceName))
                     {
+                        if (resourceStream == null)
+                        {
+                            context.ReportDiagnostic(Diagnostic.Create(
+                                new DiagnosticDescriptor(
+                                    "ASG0001",
+                                    "Invalid Resource",
+                                    $"Cannot find {ResourceName} resource",
+                                    "",
+                                    DiagnosticSeverity.Error,
+                                    true),
+                                null));
+                        }
+
+                        var namespaceName = classSymbol.ContainingNamespace.ToDisplayString();
+
                         var resourceContent = new StreamReader(resourceStream).ReadToEnd();
                         resourceContent = string.Format(resourceContent, namespaceName, classSymbol.Name,
                             GenerateSerializeContent(context, attributeSymbol, classSymbol),
                             classSymbol.BaseType.Name != "Object" ? classSymbol.BaseType.ToString() : "IAutoSerialize",
                             classSymbol.BaseType.Name != "Object" ? "override" : "virtual");
 
-                        context.AddSource($"{namespaceName}.{classSymbol.Name}.g.cs",
+                        context.AddSource($"{namespaceName}.{classSymbol.Name}.AutoSerialize.g.cs",
                             SourceText.From(resourceContent, Encoding.UTF8));
-                    }
-                    catch (Exception e)
-                    {
-                        context.ReportDiagnostic(Diagnostic.Create(
-                            new DiagnosticDescriptor(
-                                "ASG0002",
-                                "Unexpected Error",
-                                $"Unexpected Error: {e}",
-                                "",
-                                DiagnosticSeverity.Error,
-                                true),
-                            null));
                     }
                 }
             }
+            catch (Exception e)
+            {
+                context.ReportDiagnostic(Diagnostic.Create(
+                    new DiagnosticDescriptor(
+                        "ASG0002",
+                        "Unexpected Error",
+                        $"Unexpected Error: {e}",
+                        "",
+                        DiagnosticSeverity.Error,
+                        true),
+                    null));
+            }
         }
 
-        private static string GenerateSerializeContent(GeneratorExecutionContext context, INamedTypeSymbol attribute,
+        private static string GenerateSerializeContent(SourceProductionContext context, INamedTypeSymbol attribute,
             INamedTypeSymbol symbol)
         {
             var builder = new StringBuilder();
@@ -149,9 +143,9 @@ namespace AutoSerializer
                         if (fixedLen == null)
                         {
                             builder
-                            .Append('\t', tabSpace)
-                            .AppendLine($"stream.ExWrite({fieldSymbol.Name}?.{sizeProperty} ?? 0);");
-                        builder.AppendLine();
+                                .Append('\t', tabSpace)
+                                .AppendLine($"stream.ExWrite({fieldSymbol.Name}?.{sizeProperty} ?? 0);");
+                            builder.AppendLine();
                         }
 
                         builder.Append('\t', tabSpace).AppendLine($"if ({fieldSymbol.Name} != null)");
