@@ -239,7 +239,7 @@ namespace AutoSerializer
             if (isDynamic)
             {
                 builder.Append('\t', 3)
-                    .AppendLine($"buffer.Read(ref offset, buffer.Count - offset, out byte[] read_dynamicData);");
+                    .AppendLine($"buffer.Read(ref offset, buffer.Count - (offset - buffer.Offset), out byte[] read_dynamicData);");
                 builder.Append('\t', 3).AppendLine($"DynamicData = read_dynamicData;");
             }
 
