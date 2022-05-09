@@ -45,7 +45,7 @@ namespace AutoSerializer
                 {
                     var autoSerializerAssembly = Assembly.GetExecutingAssembly();
 
-                    const string ResourceName = "AutoSerializer.Resources.AutoSerializeClass.cs";
+                    const string ResourceName = "AutoSerializer.Resources.AutoSerializeClass.g";
                     using (var resourceStream = autoSerializerAssembly.GetManifestResourceStream(ResourceName))
                     {
                         if (resourceStream == null)
