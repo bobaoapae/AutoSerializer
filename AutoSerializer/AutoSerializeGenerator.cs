@@ -14,7 +14,7 @@ namespace AutoSerializer
 {
     public class AutoSerializeGenerator
     {
-        public static void Generate(Compilation compilation, ImmutableArray<ClassDeclarationSyntax> classes, SourceProductionContext context)
+        public static void Generate(Compilation compilation, ImmutableArray<INamedTypeSymbol> classes, SourceProductionContext context)
         {
             if (classes.IsDefaultOrEmpty)
             {
@@ -24,24 +24,9 @@ namespace AutoSerializer
 
             try
             {
-                var attributeSymbol =
-                    compilation.GetTypeByMetadataName("AutoSerializer.Definitions.AutoSerializeAttribute");
+                var attributeSymbol = compilation.GetTypeByMetadataName("AutoSerializer.Definitions.AutoSerializeAttribute");
 
-                var distinctClasses = classes.Distinct();
-
-                var classSymbols = new List<INamedTypeSymbol>();
-                foreach (ClassDeclarationSyntax cls in distinctClasses)
-                {
-                    var model = compilation.GetSemanticModel(cls.SyntaxTree);
-
-                    var classSymbol = model.GetDeclaredSymbol(cls);
-                    if (classSymbol?.GetAttributes().Any(ad => ad.AttributeClass?.Name == attributeSymbol?.Name) ?? false)
-                    {
-                        classSymbols.Add(classSymbol);
-                    }
-                }
-
-                foreach (var classSymbol in classSymbols)
+                foreach (var classSymbol in classes)
                 {
                     var autoSerializerAssembly = Assembly.GetExecutingAssembly();
 

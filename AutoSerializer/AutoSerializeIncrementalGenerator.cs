@@ -10,26 +10,17 @@ public class AutoSerializeIncrementalGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        IncrementalValuesProvider<ClassDeclarationSyntax> classDeclarationsServer = context.SyntaxProvider
+        var classDeclarationsServer = context.SyntaxProvider
             .CreateSyntaxProvider(
                 predicate: static (s, _) => IsSyntaxTargetForGeneration(s),
-                transform: static (ctx, _) => GetSemanticTargetForGenerationSerialize(ctx))
-            .Where(static m => m is not null);
+                transform: static (ctx, _) => GetSemanticTargetForGeneration(ctx));
 
-        IncrementalValueProvider<(Compilation, ImmutableArray<ClassDeclarationSyntax>)> compilationAndClassesServer
-            = context.CompilationProvider.Combine(classDeclarationsServer.Collect());
+        var compilationAndClassesServer = context.CompilationProvider.Combine(classDeclarationsServer.Where(static m => IsNamedTargetForGenerationSerialize(m)).Collect());
 
         context.RegisterSourceOutput(compilationAndClassesServer,
             static (spc, source) => AutoSerializeGenerator.Generate(source.Item1, source.Item2, spc));
 
-        IncrementalValuesProvider<ClassDeclarationSyntax> classDeclarationsClient = context.SyntaxProvider
-            .CreateSyntaxProvider(
-                predicate: static (s, _) => IsSyntaxTargetForGeneration(s),
-                transform: static (ctx, _) => GetSemanticTargetForGenerationDeserialize(ctx))
-            .Where(static m => m is not null);
-
-        IncrementalValueProvider<(Compilation, ImmutableArray<ClassDeclarationSyntax>)> compilationAndClassesClient
-            = context.CompilationProvider.Combine(classDeclarationsClient.Collect());
+        var compilationAndClassesClient = context.CompilationProvider.Combine(classDeclarationsServer.Where(static m => IsNamedTargetForGenerationDeserialize(m)).Collect());
 
         context.RegisterSourceOutput(compilationAndClassesClient,
             static (spc, source) => AutoDeserializeGenerator.Generate(source.Item1, source.Item2, spc));
@@ -37,49 +28,25 @@ public class AutoSerializeIncrementalGenerator : IIncrementalGenerator
 
     private static bool IsSyntaxTargetForGeneration(SyntaxNode node)
     {
-        if (node is ClassDeclarationSyntax classDeclarationSyntax && AutoSerializerUtils.CheckClassIsPublic(classDeclarationSyntax) && AutoSerializerUtils.CheckClassIsPartial(classDeclarationSyntax))
-        {
-            return true;
-        }
-
-        return false;
+        return node is ClassDeclarationSyntax classDeclarationSyntax && AutoSerializerUtils.CheckClassIsPublic(classDeclarationSyntax) && AutoSerializerUtils.CheckClassIsPartial(classDeclarationSyntax);
     }
 
-    private static ClassDeclarationSyntax GetSemanticTargetForGenerationSerialize(GeneratorSyntaxContext context)
+    private static INamedTypeSymbol GetSemanticTargetForGeneration(GeneratorSyntaxContext context)
     {
-        var attributeSymbol = context.SemanticModel.Compilation.GetTypeByMetadataName("AutoSerializer.Definitions.AutoSerializeAttribute")!;
-
         var classDeclarationSyntax = (ClassDeclarationSyntax) context.Node;
 
         var model = context.SemanticModel.GetDeclaredSymbol(classDeclarationSyntax);
 
-        if (model is INamedTypeSymbol namedTypeSymbol)
-        {
-            if (AutoSerializerUtils.CheckClassIsPublic(namedTypeSymbol) && AutoSerializerUtils.CheckClassIsPartial(namedTypeSymbol) && namedTypeSymbol.GetAttributes().Any(symbol => symbol.AttributeClass?.Name == attributeSymbol.Name))
-            {
-                return classDeclarationSyntax;
-            }
-        }
-
-        return null;
+        return (INamedTypeSymbol) model;
     }
 
-    private static ClassDeclarationSyntax GetSemanticTargetForGenerationDeserialize(GeneratorSyntaxContext context)
+    private static bool IsNamedTargetForGenerationSerialize(INamedTypeSymbol namedTypeSymbol)
     {
-        var attributeSymbol = context.SemanticModel.Compilation.GetTypeByMetadataName("AutoSerializer.Definitions.AutoDeserializeAttribute")!;
+        return AutoSerializerUtils.CheckClassIsPublic(namedTypeSymbol) && AutoSerializerUtils.CheckClassIsPartial(namedTypeSymbol) && namedTypeSymbol.GetAttributes().Any(symbol => symbol.AttributeClass?.Name == "AutoSerializeAttribute");
+    }
 
-        var classDeclarationSyntax = (ClassDeclarationSyntax) context.Node;
-
-        var model = context.SemanticModel.GetDeclaredSymbol(classDeclarationSyntax);
-
-        if (model is INamedTypeSymbol namedTypeSymbol)
-        {
-            if (AutoSerializerUtils.CheckClassIsPublic(namedTypeSymbol) && AutoSerializerUtils.CheckClassIsPartial(namedTypeSymbol) && namedTypeSymbol.GetAttributes().Any(symbol => symbol.AttributeClass?.Name == attributeSymbol.Name))
-            {
-                return classDeclarationSyntax;
-            }
-        }
-
-        return null;
+    private static bool IsNamedTargetForGenerationDeserialize(INamedTypeSymbol namedTypeSymbol)
+    {
+        return AutoSerializerUtils.CheckClassIsPublic(namedTypeSymbol) && AutoSerializerUtils.CheckClassIsPartial(namedTypeSymbol) && namedTypeSymbol.GetAttributes().Any(symbol => symbol.AttributeClass?.Name == "AutoDeserializeAttribute");
     }
 }
