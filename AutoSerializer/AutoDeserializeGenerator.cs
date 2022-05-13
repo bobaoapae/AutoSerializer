@@ -61,7 +61,7 @@ namespace AutoSerializer
                             namespaceName,
                             classSymbol.Name,
                             GenerateDeserializeContent(context, attributeSymbol, classSymbol, isDynamic),
-                            classSymbol.BaseType.Name != "Object" ? classSymbol.BaseType.ToString() : "IAutoDeserialize",
+                            classSymbol.BaseType.Name != "Object" ? "" : " : IAutoDeserialize",
                             classSymbol.BaseType.Name != "Object" ? "override" : "virtual",
                             dynamicFieldContent);
 

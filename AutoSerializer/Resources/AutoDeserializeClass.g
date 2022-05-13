@@ -5,7 +5,7 @@ using AutoSerializer.Definitions;
 
 namespace {0}
 {{
-    public partial class {1} : {3}
+    public partial class {1}{3}
     {{
         {5}
 

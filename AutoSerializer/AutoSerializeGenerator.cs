@@ -51,7 +51,7 @@ namespace AutoSerializer
                         var resourceContent = new StreamReader(resourceStream).ReadToEnd();
                         resourceContent = string.Format(resourceContent, namespaceName, classSymbol.Name,
                             GenerateSerializeContent(context, attributeSymbol, classSymbol),
-                            classSymbol.BaseType.Name != "Object" ? classSymbol.BaseType.ToString() : "IAutoSerialize",
+                            classSymbol.BaseType.Name != "Object" ? "" : " : IAutoSerialize",
                             classSymbol.BaseType.Name != "Object" ? "override" : "virtual");
 
                         context.AddSource($"{namespaceName}.{classSymbol.Name}.AutoSerialize.g.cs",
