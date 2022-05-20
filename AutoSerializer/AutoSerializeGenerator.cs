@@ -124,20 +124,27 @@ namespace AutoSerializer
                 {
                     if (fieldSymbol.Type is IArrayTypeSymbol || AutoSerializerUtils.IsList(fieldSymbol.Type))
                     {
+                        var fieldCountAttrData = fieldSymbol.GetAttributes().FirstOrDefault(x => x.AttributeClass?.Name == "FieldCountAttribute");
+                        var fixedCount = fieldCountAttrData?.ConstructorArguments.FirstOrDefault().Value;
+                        
                         var sizeProperty = fieldSymbol.Type is IArrayTypeSymbol ? "Length" : "Count";
-                        if (fixedLen == null)
+                        
+                        if (fixedLen == null && fixedCount == null)
                         {
                             builder
                                 .Append('\t', tabSpace)
                                 .AppendLine($"stream.ExWrite({fieldSymbol.Name}?.{sizeProperty} ?? 0);");
                             builder.AppendLine();
                         }
+                        
+                        
+                        
+                        var genericType = fieldSymbol.Type is IArrayTypeSymbol arrayTypeSymbol ? arrayTypeSymbol.ElementType : ((INamedTypeSymbol) fieldSymbol.Type).TypeArguments.First();
 
                         builder.Append('\t', tabSpace).AppendLine($"if ({fieldSymbol.Name} != null)");
                         builder.Append('\t', tabSpace++).AppendLine("{");
 
-                        builder.Append('\t', tabSpace)
-                            .AppendLine($"for (var i = 0; i < {fieldSymbol.Name}.{sizeProperty}; i++)");
+                        builder.Append('\t', tabSpace).AppendLine($"for (var i = 0; i < {fieldSymbol.Name}.{sizeProperty}; i++)");
                         builder.Append('\t', tabSpace++).AppendLine("{");
 
                         builder.Append('\t', tabSpace).AppendLine($"{fieldSymbol.Name}[i]?.Serialize(stream);");
@@ -145,6 +152,22 @@ namespace AutoSerializer
                         builder.Append('\t', --tabSpace).AppendLine("}");
 
                         builder.Append('\t', --tabSpace).AppendLine("}").AppendLine();
+                        
+                        if (fixedCount != null)
+                        {
+                            builder.Append('\t', tabSpace).AppendLine($"if ({fieldSymbol.Name} == null || {fieldSymbol.Name}.{sizeProperty} < {fixedCount})");
+                            builder.Append('\t', tabSpace++).AppendLine("{");
+                            builder.Append('\t', tabSpace).AppendLine($"var trashObjForFixedLen = new {genericType}();");
+                            
+                            builder.Append('\t', tabSpace).AppendLine($"for (var i = 0; i < {fixedCount} - ({fieldSymbol.Name}?.{sizeProperty} ?? 0); i++)");
+                            builder.Append('\t', tabSpace++).AppendLine("{");
+
+                            builder.Append('\t', tabSpace).AppendLine($"trashObjForFixedLen.Serialize(stream);");
+
+                            builder.Append('\t', --tabSpace).AppendLine("}");
+                            
+                            builder.Append('\t', --tabSpace).AppendLine("}");
+                        }
                     }
                     else
                     {
