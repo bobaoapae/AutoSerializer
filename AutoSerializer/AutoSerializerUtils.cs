@@ -65,7 +65,6 @@ public static class AutoSerializerUtils
 
     public static bool IsList(ITypeSymbol typeSymbol)
     {
-        return typeSymbol.AllInterfaces.Any(symbol =>
-            symbol.Name == "ICollection" || symbol.Name == "IReadOnlyCollection`1");
+        return typeSymbol.AllInterfaces.Any(symbol => symbol.Name == "ICollection" || symbol.Name == "IReadOnlyCollection`1");
     }
 }

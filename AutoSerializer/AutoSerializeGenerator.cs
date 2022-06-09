@@ -120,85 +120,47 @@ namespace AutoSerializer
                     builder.Append('\t', tabSpace).AppendLine($"int {actualBytesFieldName} = (int)stream.Length;");
                 }
 
-                if (AutoSerializerUtils.NeedUseAutoSerializeOrDeserialize(fieldSymbol.Type))
+                if (fieldSymbol.Type.ToString() == "string" || fieldSymbol.Type is IArrayTypeSymbol || AutoSerializerUtils.IsList(fieldSymbol.Type))
                 {
+                    var fieldCountAttrData = fieldSymbol.GetAttributes().FirstOrDefault(x => x.AttributeClass?.Name == "FieldCountAttribute");
+                    var fixedCount = fieldCountAttrData?.ConstructorArguments.FirstOrDefault().Value;
+
+                    if (fixedLen == null && fixedCount == null)
+                    {
+                        var sizeProperty = fieldSymbol.Type is IArrayTypeSymbol || fieldSymbol.Type.ToString() == "string" ? "Length" : "Count";
+
+                        builder.Append('\t', tabSpace).AppendLine($"stream.ExWrite({fieldSymbol.Name}?.{sizeProperty} ?? 0);");
+                    }
+                }
+
+                if (fieldSymbol.Type is INamedTypeSymbol { EnumUnderlyingType: { } } nameSymbol)
+                {
+                    builder.Append('\t', tabSpace).AppendLine($"stream.ExWrite({(nameSymbol.EnumUnderlyingType != null ? $"({nameSymbol.EnumUnderlyingType})" : "") + fieldSymbol.Name});");
+                }
+                else
+                {
+                    //TODO: support collection of enum
+                    builder.Append('\t', tabSpace).AppendLine($"stream.ExWrite({fieldSymbol.Name});");
                     if (fieldSymbol.Type is IArrayTypeSymbol || AutoSerializerUtils.IsList(fieldSymbol.Type))
                     {
                         var fieldCountAttrData = fieldSymbol.GetAttributes().FirstOrDefault(x => x.AttributeClass?.Name == "FieldCountAttribute");
                         var fixedCount = fieldCountAttrData?.ConstructorArguments.FirstOrDefault().Value;
-                        
-                        var sizeProperty = fieldSymbol.Type is IArrayTypeSymbol ? "Length" : "Count";
-                        
-                        if (fixedLen == null && fixedCount == null)
-                        {
-                            builder
-                                .Append('\t', tabSpace)
-                                .AppendLine($"stream.ExWrite({fieldSymbol.Name}?.{sizeProperty} ?? 0);");
-                            builder.AppendLine();
-                        }
-                        
-                        
-                        
-                        var genericType = fieldSymbol.Type is IArrayTypeSymbol arrayTypeSymbol ? arrayTypeSymbol.ElementType : ((INamedTypeSymbol) fieldSymbol.Type).TypeArguments.First();
 
-                        builder.Append('\t', tabSpace).AppendLine($"if ({fieldSymbol.Name} != null)");
-                        builder.Append('\t', tabSpace++).AppendLine("{");
-
-                        builder.Append('\t', tabSpace).AppendLine($"for (var i = 0; i < {fieldSymbol.Name}.{sizeProperty}; i++)");
-                        builder.Append('\t', tabSpace++).AppendLine("{");
-
-                        builder.Append('\t', tabSpace).AppendLine($"{fieldSymbol.Name}[i]?.Serialize(stream);");
-
-                        builder.Append('\t', --tabSpace).AppendLine("}");
-
-                        builder.Append('\t', --tabSpace).AppendLine("}").AppendLine();
-                        
                         if (fixedCount != null)
                         {
+                            var sizeProperty = fieldSymbol.Type is IArrayTypeSymbol ? "Length" : "Count";
+                            var genericType = fieldSymbol.Type is IArrayTypeSymbol arrayTypeSymbol ? arrayTypeSymbol.ElementType : ((INamedTypeSymbol)fieldSymbol.Type).TypeArguments.First();
+
                             builder.Append('\t', tabSpace).AppendLine($"if ({fieldSymbol.Name} == null || {fieldSymbol.Name}.{sizeProperty} < {fixedCount})");
                             builder.Append('\t', tabSpace++).AppendLine("{");
                             builder.Append('\t', tabSpace).AppendLine($"var trashObjForFixedLen = new {genericType}();");
-                            
+
                             builder.Append('\t', tabSpace).AppendLine($"for (var i = 0; i < {fixedCount} - ({fieldSymbol.Name}?.{sizeProperty} ?? 0); i++)");
                             builder.Append('\t', tabSpace++).AppendLine("{");
-
-                            builder.Append('\t', tabSpace).AppendLine($"trashObjForFixedLen.Serialize(stream);");
+                            builder.Append('\t', tabSpace).AppendLine($"stream.ExWrite(trashObjForFixedLen);");
+                            builder.Append('\t', --tabSpace).AppendLine("}");
 
                             builder.Append('\t', --tabSpace).AppendLine("}");
-                            
-                            builder.Append('\t', --tabSpace).AppendLine("}");
-                        }
-                    }
-                    else
-                    {
-                        builder.Append('\t', tabSpace).AppendLine($"{fieldSymbol.Name}.Serialize(stream);")
-                            .AppendLine();
-                    }
-                }
-                else
-                {
-                    if (fieldSymbol.Type is INamedTypeSymbol {EnumUnderlyingType: { }} nameSymbol)
-                    {
-                        builder
-                            .Append('\t', tabSpace)
-                            .AppendLine(
-                                $"stream.ExWrite({(nameSymbol.EnumUnderlyingType != null ? $"({nameSymbol.EnumUnderlyingType})" : "") + fieldSymbol.Name});");
-                    }
-                    else
-                    {
-                        if (fixedLen != null && (AutoSerializerUtils.IsList(fieldSymbol.Type) || fieldSymbol.Type is IArrayTypeSymbol || fieldSymbol.Type.ToString() == "string"))
-                        {
-                            builder
-                                .Append('\t', tabSpace)
-                                .AppendLine(
-                                    $"stream.ExWrite({fieldSymbol.Name}, false);");
-                        }
-                        else
-                        {
-                            builder
-                                .Append('\t', tabSpace)
-                                .AppendLine(
-                                    $"stream.ExWrite({fieldSymbol.Name});");
                         }
                     }
                 }
