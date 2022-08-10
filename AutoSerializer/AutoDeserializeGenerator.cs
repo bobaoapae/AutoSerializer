@@ -6,8 +6,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
 namespace AutoSerializer
@@ -112,6 +110,9 @@ namespace AutoSerializer
                 var serializeWhenExpression = serializeWhenAttrData?.ConstructorArguments.FirstOrDefault().Value;
 
                 var tabSpace = 3;
+                builder.Append('\t', tabSpace).AppendLine("try");
+                builder.Append('\t', tabSpace).AppendLine("{");
+                tabSpace++;
 
                 if (serializeWhenExpression != null)
                 {
@@ -179,6 +180,15 @@ namespace AutoSerializer
                 {
                     builder.Append('\t', tabSpace - 1).AppendLine("}").AppendLine();
                 }
+
+                tabSpace--;
+                builder.Append('\t', tabSpace).AppendLine("}");
+                builder.Append('\t', tabSpace).AppendLine("catch(Exception e)");
+                builder.Append('\t', tabSpace).AppendLine("{");
+                tabSpace++;
+                builder.Append('\t', tabSpace).AppendLine($"throw new Exception(\"Error deserializing field {fieldSymbol.Name} of type {fieldSymbol.Type.Name} in class {symbol.Name}\", e);");
+                tabSpace--;
+                builder.Append('\t', tabSpace).AppendLine("}");
             }
 
             if (isDynamic)
