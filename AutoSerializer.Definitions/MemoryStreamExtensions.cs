@@ -7,7 +7,7 @@ namespace AutoSerializer.Definitions
 {
     public static class MemoryStreamExtensions
     {
-        public static void Skip(this MemoryStream stream, in int size)
+        public static void ExSkip(this MemoryStream stream, in int size)
         {
             for (var i = 0; i < size; i++)
                 stream.WriteByte(0);

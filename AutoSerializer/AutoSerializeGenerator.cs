@@ -173,7 +173,7 @@ namespace AutoSerializer
                         .AppendLine($"int {remainingBytesFieldName} = {fixedLen} - {writedBytesFieldName};");
 
                     builder.Append('\t', tabSpace).AppendLine($"if ({remainingBytesFieldName} > 0)");
-                    builder.Append('\t', ++tabSpace).AppendLine($"stream.Skip({remainingBytesFieldName});")
+                    builder.Append('\t', ++tabSpace).AppendLine($"stream.ExSkip({remainingBytesFieldName});")
                         .AppendLine();
                 }
 
