@@ -6,8 +6,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
 namespace AutoSerializer
@@ -73,8 +71,7 @@ namespace AutoSerializer
             }
         }
 
-        private static string GenerateSerializeContent(SourceProductionContext context, INamedTypeSymbol attribute,
-            INamedTypeSymbol symbol)
+        private static string GenerateSerializeContent(SourceProductionContext context, INamedTypeSymbol attribute, INamedTypeSymbol symbol)
         {
             var builder = new StringBuilder();
 
@@ -127,9 +124,16 @@ namespace AutoSerializer
 
                     if (fixedLen == null && fixedCount == null)
                     {
-                        var sizeProperty = fieldSymbol.Type is IArrayTypeSymbol || fieldSymbol.Type.ToString() == "string" ? "Length" : "Count";
+                        if (fieldSymbol.Type.ToString() == "string")
+                        {
+                            builder.Append('\t', tabSpace).AppendLine($"stream.ExWrite({fieldSymbol.Name} == null ? 0 : System.Text.Encoding.UTF8.GetByteCount({fieldSymbol.Name}));");
+                        }
+                        else
+                        {
+                            var sizeProperty = fieldSymbol.Type is IArrayTypeSymbol ? "Length" : "Count";
 
-                        builder.Append('\t', tabSpace).AppendLine($"stream.ExWrite({fieldSymbol.Name}?.{sizeProperty} ?? 0);");
+                            builder.Append('\t', tabSpace).AppendLine($"stream.ExWrite({fieldSymbol.Name}?.{sizeProperty} ?? 0);");
+                        }
                     }
                 }
 
