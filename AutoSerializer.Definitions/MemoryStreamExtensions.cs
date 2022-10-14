@@ -90,6 +90,16 @@ namespace AutoSerializer.Definitions
             stream.Write(src, 0, src.Length);
         }
 
+        public static void ExWrite(this MemoryStream stream, DateTimeOffset dateTimeOffset)
+        {
+            stream.ExWrite(dateTimeOffset.ToUnixTimeSeconds());
+        }
+
+        public static void ExWrite(this MemoryStream stream, DateTime dateTime)
+        {
+            stream.ExWrite(new DateTimeOffset(dateTime));
+        }
+
         public static void ExWrite(this MemoryStream stream, string value)
         {
             if (string.IsNullOrEmpty(value))

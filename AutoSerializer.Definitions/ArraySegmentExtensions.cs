@@ -63,6 +63,18 @@ namespace AutoSerializer.Definitions
             offset += 8;
         }
 
+        public static void Read(this ArraySegment<byte> buffer, ref int offset, out DateTimeOffset dateTimeOffset)
+        {
+            buffer.Read(ref offset, out long seconds);
+            dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(seconds);
+        }
+
+        public static void Read(this ArraySegment<byte> buffer, ref int offset, out DateTime dateTime)
+        {
+            buffer.Read(ref offset, out DateTimeOffset dateTimeOffset);
+            dateTime = dateTimeOffset.DateTime;
+        }
+
         public static void Read(this ArraySegment<byte> buffer, ref int offset, in int size, out string value)
         {
             value = Encoding.UTF8.GetString(buffer.Array!, offset, size);
