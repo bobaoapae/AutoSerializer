@@ -107,7 +107,7 @@ namespace AutoSerializer.Definitions
                 return;
             }
 
-            var bytes = Encoding.Default.GetBytes(value);
+            var bytes = Encoding.UTF8.GetBytes(value);
 
             stream.ExWrite(bytes);
         }
