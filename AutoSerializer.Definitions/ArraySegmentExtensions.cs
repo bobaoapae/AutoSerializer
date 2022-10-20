@@ -65,8 +65,9 @@ namespace AutoSerializer.Definitions
 
         public static void Read(this ArraySegment<byte> buffer, ref int offset, out DateTimeOffset dateTimeOffset)
         {
+            buffer.Read(ref offset, out int offsetHours);
             buffer.Read(ref offset, out long seconds);
-            dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(seconds);
+            dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(seconds).ToOffset(TimeSpan.FromHours(offsetHours));
         }
 
         public static void Read(this ArraySegment<byte> buffer, ref int offset, out DateTime dateTime)
@@ -170,7 +171,7 @@ namespace AutoSerializer.Definitions
                 offset += 2;
             }
         }
-        
+
         public static void Read(this ArraySegment<byte> buffer, ref int offset, in int size, out string[] value)
         {
             value = new string[size];
@@ -288,7 +289,7 @@ namespace AutoSerializer.Definitions
                 value.Add(val);
             }
         }
-        
+
         public static void Read<T>(this ArraySegment<byte> buffer, ref int offset, in int size, out List<T> value) where T : IAutoDeserialize, new()
         {
             value = new List<T>(size);
@@ -298,7 +299,7 @@ namespace AutoSerializer.Definitions
                 value.Add(val);
             }
         }
-        
+
         public static void Read<T>(this ArraySegment<byte> buffer, ref int offset, in int size, out T[] value) where T : IAutoDeserialize, new()
         {
             value = new T[size];
@@ -308,7 +309,7 @@ namespace AutoSerializer.Definitions
                 value[i] = val;
             }
         }
-        
+
         public static void Read<T>(this ArraySegment<byte> buffer, ref int offset, in int size, out Collection<T> value) where T : IAutoDeserialize, IAutoSerialize, new()
         {
             value = new Collection<T>(size);

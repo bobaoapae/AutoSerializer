@@ -92,6 +92,7 @@ namespace AutoSerializer.Definitions
 
         public static void ExWrite(this MemoryStream stream, DateTimeOffset dateTimeOffset)
         {
+            stream.ExWrite(dateTimeOffset.Offset.Hours);
             stream.ExWrite(dateTimeOffset.ToUnixTimeSeconds());
         }
 
