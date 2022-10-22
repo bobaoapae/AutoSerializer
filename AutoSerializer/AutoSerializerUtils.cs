@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System.IO;
+using System.Linq;
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -66,5 +68,25 @@ public static class AutoSerializerUtils
     public static bool IsList(ITypeSymbol typeSymbol)
     {
         return typeSymbol.AllInterfaces.Any(symbol => symbol.Name == "ICollection" || symbol.Name == "IReadOnlyCollection`1");
+    }
+    
+    public static string GetResource(Assembly assembly, SourceProductionContext context, string resourceName)
+    {
+        using (var resourceStream = assembly.GetManifestResourceStream($"AutoSerializer.Resources.{resourceName}.g"))
+        {
+            if (resourceStream != null)
+                return new StreamReader(resourceStream).ReadToEnd();
+
+            context.ReportDiagnostic(Diagnostic.Create(
+                new DiagnosticDescriptor(
+                    "ADG0001",
+                    "Invalid Resource",
+                    $"Cannot find {resourceName}.g resource",
+                    "",
+                    DiagnosticSeverity.Error,
+                    true),
+                null));
+            return "";
+        }
     }
 }

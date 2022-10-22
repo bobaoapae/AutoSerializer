@@ -4,7 +4,7 @@ using System.Text;
 
 namespace AutoSerializer.Definitions
 {
-    public static class ArraySegmentExtensions
+    public static partial class ArraySegmentExtensions
     {
         public static void Read(this ArraySegment<byte> buffer, ref int offset, out bool value)
         {

@@ -25,47 +25,41 @@ namespace AutoSerializer
                 var attributeSymbol =
                     compilation.GetTypeByMetadataName("AutoSerializer.Definitions.AutoDeserializeAttribute");
 
+                var autoSerializerAssembly = Assembly.GetExecutingAssembly();
+
+                var autoDeserializeTemplate = AutoSerializerUtils.GetResource(autoSerializerAssembly, context, "AutoDeserializeClass");
+                var arraySegmentExtensionsGenericTemplate = AutoSerializerUtils.GetResource(autoSerializerAssembly, context, "ArraySegmentExtensions");
+                var arraySegmentExtensionsGenericMethodTemplate = AutoSerializerUtils.GetResource(autoSerializerAssembly, context, "ArraySegmentExtensionsGenericMethod");
+
+                var knowGenericDeserializers = new List<string>();
+
+                var stringBuilderArraySegmentGenericMethods = new StringBuilder();
+
                 foreach (var classSymbol in classes)
                 {
-                    var autoSerializerAssembly = Assembly.GetExecutingAssembly();
+                    var namespaceName = classSymbol.ContainingNamespace.ToDisplayString();
 
-                    const string ResourceName = "AutoSerializer.Resources.AutoDeserializeClass.g";
-                    using (var resourceStream = autoSerializerAssembly.GetManifestResourceStream(ResourceName))
-                    {
-                        if (resourceStream == null)
-                        {
-                            context.ReportDiagnostic(Diagnostic.Create(
-                                new DiagnosticDescriptor(
-                                    "ADG0001",
-                                    "Invalid Resource",
-                                    $"Cannot find {ResourceName} resource",
-                                    "",
-                                    DiagnosticSeverity.Error,
-                                    true),
-                                null));
-                        }
+                    var attributeData = classSymbol.GetAttributes().First(ad => ad.AttributeClass?.Name == attributeSymbol?.Name);
+                    var isDynamic = attributeData.NamedArguments.Length > 0 && (bool)attributeData.NamedArguments.First()!.Value!.Value!;
 
-                        var namespaceName = classSymbol.ContainingNamespace.ToDisplayString();
+                    var dynamicFieldContent = isDynamic ? "public byte[] DynamicData { get; set; }" : string.Empty;
 
-                        var attributeData = classSymbol?.GetAttributes()
-                            .First(ad => ad.AttributeClass?.Name == attributeSymbol?.Name);
-                        var isDynamic = attributeData.NamedArguments.Length > 0 &&
-                                        (bool) attributeData.NamedArguments.First().Value.Value;
+                    var resourceContent = string.Format(autoDeserializeTemplate,
+                        namespaceName,
+                        classSymbol.Name,
+                        GenerateDeserializeContent(classSymbol, isDynamic, knowGenericDeserializers, arraySegmentExtensionsGenericMethodTemplate, stringBuilderArraySegmentGenericMethods),
+                        classSymbol.BaseType!.Name != "Object" ? "" : " : IAutoDeserialize",
+                        classSymbol.BaseType.Name != "Object" ? "override" : "virtual",
+                        dynamicFieldContent);
 
-                        var dynamicFieldContent = isDynamic ? "public byte[] DynamicData { get; set; }" : string.Empty;
+                    context.AddSource($"{namespaceName}.{classSymbol.Name}.AutoDeserialize.g.cs",
+                        SourceText.From(resourceContent, Encoding.UTF8));
+                }
 
-                        var resourceContent = new StreamReader(resourceStream).ReadToEnd();
-                        resourceContent = string.Format(resourceContent,
-                            namespaceName,
-                            classSymbol.Name,
-                            GenerateDeserializeContent(context, attributeSymbol, classSymbol, isDynamic),
-                            classSymbol.BaseType.Name != "Object" ? "" : " : IAutoDeserialize",
-                            classSymbol.BaseType.Name != "Object" ? "override" : "virtual",
-                            dynamicFieldContent);
-
-                        context.AddSource($"{namespaceName}.{classSymbol.Name}.AutoDeserialize.g.cs",
-                            SourceText.From(resourceContent, Encoding.UTF8));
-                    }
+                if (stringBuilderArraySegmentGenericMethods.Length > 0)
+                {
+                    var arraySegmentExtensionsContent = string.Format(arraySegmentExtensionsGenericTemplate, stringBuilderArraySegmentGenericMethods);
+                    context.AddSource("AutoSerializer.Definitions.ArraySegmentExtensions.g.cs", SourceText.From(arraySegmentExtensionsContent, Encoding.UTF8));
                 }
             }
             catch (Exception e)
@@ -74,7 +68,7 @@ namespace AutoSerializer
                     new DiagnosticDescriptor(
                         "ADG0002",
                         "Unexpected Error",
-                        $"Unexpected Error: {e}",
+                        $"Unexpected Error: {e} - {e.StackTrace}",
                         "",
                         DiagnosticSeverity.Error,
                         true),
@@ -82,8 +76,7 @@ namespace AutoSerializer
             }
         }
 
-        private static string GenerateDeserializeContent(SourceProductionContext context, INamedTypeSymbol attribute,
-            INamedTypeSymbol symbol, bool isDynamic)
+        private static string GenerateDeserializeContent(INamedTypeSymbol symbol, bool isDynamic, List<string> knowGenericDeserializers, string arraySegmentExtensionsGenericTemplate, StringBuilder builderArraySegmentExtensionsGeneric)
         {
             var builder = new StringBuilder();
 
@@ -131,10 +124,24 @@ namespace AutoSerializer
                     builder.Append('\t', tabSpace).AppendLine($"int {actualBytesFieldName} = (int)offset;");
                 }
 
-                var hasSizeProperty = fieldSymbol.Type.ToString() == "string" || fieldSymbol.Type is IArrayTypeSymbol || AutoSerializerUtils.IsList(fieldSymbol.Type);
-                
+                var isListOrArray = fieldSymbol.Type is IArrayTypeSymbol || AutoSerializerUtils.IsList(fieldSymbol.Type);
+                var hasSizeProperty = fieldSymbol.Type.ToString() == "string" || isListOrArray;
+                var correctedType = fieldSymbol.Type;
+
                 if (hasSizeProperty)
                 {
+                    if (isListOrArray)
+                    {
+                        if (fieldSymbol.Type is IArrayTypeSymbol arrayTypeSymbol)
+                        {
+                            correctedType = arrayTypeSymbol.ElementType;
+                        }
+                        else
+                        {
+                            correctedType = ((INamedTypeSymbol)fieldSymbol.Type).TypeArguments[0];
+                        }
+                    }
+
                     var fieldCountAttrData = fieldSymbol.GetAttributes().FirstOrDefault(x => x.AttributeClass?.Name == "FieldCountAttribute");
                     var fixedCount = fieldCountAttrData?.ConstructorArguments.FirstOrDefault().Value;
 
@@ -147,8 +154,8 @@ namespace AutoSerializer
                         builder.Append('\t', tabSpace).AppendLine($"int len_{fieldSymbol.Name} = {fixedLen ?? fixedCount};");
                     }
                 }
-                
-                if (fieldSymbol.Type is INamedTypeSymbol {EnumUnderlyingType: { }} nameSymbol)
+
+                if (fieldSymbol.Type is INamedTypeSymbol { EnumUnderlyingType: { } } nameSymbol)
                 {
                     builder.Append('\t', tabSpace).AppendLine($"buffer.Read(ref offset, out {nameSymbol.EnumUnderlyingType} read_{fieldSymbol.Name});");
                     builder.Append('\t', tabSpace).AppendLine($"{fieldSymbol.Name} = ({fieldSymbol.Type})read_{fieldSymbol.Name};");
@@ -163,8 +170,14 @@ namespace AutoSerializer
                     {
                         builder.Append('\t', tabSpace).AppendLine($"buffer.Read(ref offset, out {fieldSymbol.Type} read_{fieldSymbol.Name});");
                     }
-                    
+
                     builder.Append('\t', tabSpace).AppendLine($"{fieldSymbol.Name} = read_{fieldSymbol.Name};");
+
+                    if (AutoSerializerUtils.NeedUseAutoSerializeOrDeserialize(correctedType) && !knowGenericDeserializers.Contains(correctedType.ToDisplayString()))
+                    {
+                        var method = string.Format(arraySegmentExtensionsGenericTemplate, correctedType.ToDisplayString());
+                        builderArraySegmentExtensionsGeneric.Append(method).AppendLine();
+                    }
                 }
 
                 if (fixedLen != null)
