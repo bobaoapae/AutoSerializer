@@ -17,6 +17,11 @@ public static void Read(this ArraySegment<byte> buffer, ref int offset, in int s
 
 public static void Read(this ArraySegment<byte> buffer, ref int offset, in int size, out {0}[] value)
 {{
+    if(size == 0)
+    {{
+        value = System.Array.Empty<{0}>();
+        return;
+    }}
     value = new {0}[size];
     for (var i = 0; i < size; i++)
     {{
