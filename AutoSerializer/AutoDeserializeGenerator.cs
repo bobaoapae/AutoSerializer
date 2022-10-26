@@ -30,9 +30,7 @@ namespace AutoSerializer
                 var autoDeserializeTemplate = AutoSerializerUtils.GetResource(autoSerializerAssembly, context, "AutoDeserializeClass");
                 var arraySegmentExtensionsGenericTemplate = AutoSerializerUtils.GetResource(autoSerializerAssembly, context, "ArraySegmentExtensions");
                 var arraySegmentExtensionsGenericMethodTemplate = AutoSerializerUtils.GetResource(autoSerializerAssembly, context, "ArraySegmentExtensionsGenericMethod");
-
-                var knowGenericDeserializers = new List<string>();
-
+                
                 var stringBuilderArraySegmentGenericMethods = new StringBuilder();
 
                 foreach (var classSymbol in classes)
@@ -47,13 +45,16 @@ namespace AutoSerializer
                     var resourceContent = string.Format(autoDeserializeTemplate,
                         namespaceName,
                         classSymbol.Name,
-                        GenerateDeserializeContent(classSymbol, isDynamic, knowGenericDeserializers, arraySegmentExtensionsGenericMethodTemplate, stringBuilderArraySegmentGenericMethods),
+                        GenerateDeserializeContent(classSymbol, isDynamic),
                         classSymbol.BaseType!.Name != "Object" ? "" : " : IAutoDeserialize",
                         classSymbol.BaseType.Name != "Object" ? "override" : "virtual",
                         dynamicFieldContent);
 
                     context.AddSource($"{namespaceName}.{classSymbol.Name}.AutoDeserialize.g.cs",
                         SourceText.From(resourceContent, Encoding.UTF8));
+                    
+                    var method = string.Format(arraySegmentExtensionsGenericMethodTemplate, classSymbol.ToDisplayString());
+                    stringBuilderArraySegmentGenericMethods.Append(method).AppendLine();
                 }
 
                 if (stringBuilderArraySegmentGenericMethods.Length > 0)
@@ -76,7 +77,7 @@ namespace AutoSerializer
             }
         }
 
-        private static string GenerateDeserializeContent(INamedTypeSymbol symbol, bool isDynamic, List<string> knowGenericDeserializers, string arraySegmentExtensionsGenericTemplate, StringBuilder builderArraySegmentExtensionsGeneric)
+        private static string GenerateDeserializeContent(INamedTypeSymbol symbol, bool isDynamic)
         {
             var builder = new StringBuilder();
 
@@ -126,22 +127,9 @@ namespace AutoSerializer
 
                 var isListOrArray = fieldSymbol.Type is IArrayTypeSymbol || AutoSerializerUtils.IsList(fieldSymbol.Type);
                 var hasSizeProperty = fieldSymbol.Type.ToString() == "string" || isListOrArray;
-                var correctedType = fieldSymbol.Type;
 
                 if (hasSizeProperty)
                 {
-                    if (isListOrArray)
-                    {
-                        if (fieldSymbol.Type is IArrayTypeSymbol arrayTypeSymbol)
-                        {
-                            correctedType = arrayTypeSymbol.ElementType;
-                        }
-                        else
-                        {
-                            correctedType = ((INamedTypeSymbol)fieldSymbol.Type).TypeArguments[0];
-                        }
-                    }
-
                     var fieldCountAttrData = fieldSymbol.GetAttributes().FirstOrDefault(x => x.AttributeClass?.Name == "FieldCountAttribute");
                     var fixedCount = fieldCountAttrData?.ConstructorArguments.FirstOrDefault().Value;
 
@@ -172,12 +160,6 @@ namespace AutoSerializer
                     }
 
                     builder.Append('\t', tabSpace).AppendLine($"{fieldSymbol.Name} = read_{fieldSymbol.Name};");
-
-                    if (AutoSerializerUtils.NeedUseAutoSerializeOrDeserialize(correctedType) && !knowGenericDeserializers.Contains(correctedType.ToDisplayString()))
-                    {
-                        var method = string.Format(arraySegmentExtensionsGenericTemplate, correctedType.ToDisplayString());
-                        builderArraySegmentExtensionsGeneric.Append(method).AppendLine();
-                    }
                 }
 
                 if (fixedLen != null)
