@@ -1,13 +1,16 @@
 ﻿using System.IO;
+using Newtonsoft.Json.Linq;
 using AutoSerializer.Definitions;
 
 namespace {0}
 {{
-    public partial class {1}{3}
+    public partial class {1}{2}
     {{
-        public {4} void Serialize(MemoryStream stream)
+        public {3} void Serialize(MemoryStream stream)
         {{
-{2}
+{4}
         }}
+
+{5}
     }}
 }}

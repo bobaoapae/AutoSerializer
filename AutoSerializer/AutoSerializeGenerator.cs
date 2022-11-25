@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
@@ -22,39 +23,31 @@ namespace AutoSerializer
 
             try
             {
+                var autoSerializerAssembly = Assembly.GetExecutingAssembly();
+
                 var attributeSymbol = compilation.GetTypeByMetadataName("AutoSerializer.Definitions.AutoSerializeAttribute");
+                var autoSerializeTemplate = AutoSerializerUtils.GetResource(autoSerializerAssembly, context, "AutoSerializeClass");
+                var writeToJsonMethodTemplate = AutoSerializerUtils.GetResource(autoSerializerAssembly, context, "WriteToJsonMethod");
 
                 foreach (var classSymbol in classes)
                 {
-                    var autoSerializerAssembly = Assembly.GetExecutingAssembly();
+                    var isBaseClass = classSymbol.BaseType.Name == "Object";
 
-                    const string ResourceName = "AutoSerializer.Resources.AutoSerializeClass.g";
-                    using (var resourceStream = autoSerializerAssembly.GetManifestResourceStream(ResourceName))
-                    {
-                        if (resourceStream == null)
-                        {
-                            context.ReportDiagnostic(Diagnostic.Create(
-                                new DiagnosticDescriptor(
-                                    "ASG0001",
-                                    "Invalid Resource",
-                                    $"Cannot find {ResourceName} resource",
-                                    "",
-                                    DiagnosticSeverity.Error,
-                                    true),
-                                null));
-                        }
+                    var namespaceName = classSymbol.ContainingNamespace.ToDisplayString();
 
-                        var namespaceName = classSymbol.ContainingNamespace.ToDisplayString();
+                    var writeToJsonMethod = AutoSerializerUtils.IsBothAutoSerializeAndDeserialize(classSymbol)
+                        ? ""
+                        : string.Format(writeToJsonMethodTemplate, !isBaseClass ? "override" : "virtual", JsonViewerGenerator.GenerateSerializeJsonContent(context, attributeSymbol, classSymbol));
 
-                        var resourceContent = new StreamReader(resourceStream).ReadToEnd();
-                        resourceContent = string.Format(resourceContent, namespaceName, classSymbol.Name,
-                            GenerateSerializeContent(context, attributeSymbol, classSymbol),
-                            classSymbol.BaseType.Name != "Object" ? "" : " : IAutoSerialize",
-                            classSymbol.BaseType.Name != "Object" ? "override" : "virtual");
+                    var resourceContent = string.Format(autoSerializeTemplate,
+                        namespaceName,
+                        classSymbol.Name,
+                        isBaseClass ? " : IAutoSerialize" : "",
+                        isBaseClass ? "virtual" : "override",
+                        GenerateSerializeContent(context, attributeSymbol, classSymbol),
+                        writeToJsonMethod);
 
-                        context.AddSource($"{namespaceName}.{classSymbol.Name}.AutoSerialize.g.cs",
-                            SourceText.From(resourceContent, Encoding.UTF8));
-                    }
+                    context.AddSource($"{namespaceName}.{classSymbol.Name}.AutoSerialize.g.cs", SourceText.From(resourceContent, Encoding.UTF8));
                 }
             }
             catch (Exception e)
@@ -84,7 +77,7 @@ namespace AutoSerializer
                 }
             }
 
-            if (symbol.BaseType.Name != "Object")
+            if (symbol.BaseType!.Name != "Object")
             {
                 builder.Append('\t', 3).AppendLine($"base.Serialize(stream);").AppendLine();
             }

@@ -33,6 +33,15 @@ public static class AutoSerializerUtils
         return false;
     }
     
+    public static bool IsBothAutoSerializeAndDeserialize(ITypeSymbol typeSymbol)
+    {
+        if (typeSymbol is not INamedTypeSymbol namedTypeSymbol) 
+            return false;
+        return namedTypeSymbol.GetAttributes()
+            .Any(symbol => symbol.AttributeClass?.Name is "AutoSerializeAttribute") && namedTypeSymbol
+            .GetAttributes().Any(symbol => symbol.AttributeClass?.Name is "AutoDeserializeAttribute");
+    }
+    
     public static bool CheckClassIsPartial(INamedTypeSymbol namedTypeSymbol)
     {
         foreach (var declaringSyntaxReference in namedTypeSymbol.DeclaringSyntaxReferences)

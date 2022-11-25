@@ -28,9 +28,10 @@ namespace AutoSerializer
                 var autoSerializerAssembly = Assembly.GetExecutingAssembly();
 
                 var autoDeserializeTemplate = AutoSerializerUtils.GetResource(autoSerializerAssembly, context, "AutoDeserializeClass");
+                var writeToJsonMethodTemplate = AutoSerializerUtils.GetResource(autoSerializerAssembly, context, "WriteToJsonMethod");
                 var arraySegmentExtensionsGenericTemplate = AutoSerializerUtils.GetResource(autoSerializerAssembly, context, "ArraySegmentExtensions");
                 var arraySegmentExtensionsGenericMethodTemplate = AutoSerializerUtils.GetResource(autoSerializerAssembly, context, "ArraySegmentExtensionsGenericMethod");
-                
+
                 var stringBuilderArraySegmentGenericMethods = new StringBuilder();
 
                 foreach (var classSymbol in classes)
@@ -39,20 +40,22 @@ namespace AutoSerializer
 
                     var attributeData = classSymbol.GetAttributes().First(ad => ad.AttributeClass?.Name == attributeSymbol?.Name);
                     var isDynamic = attributeData.NamedArguments.Length > 0 && (bool)attributeData.NamedArguments.First()!.Value!.Value!;
-
+                    var isBaseClass = classSymbol.BaseType.Name == "Object";
                     var dynamicFieldContent = isDynamic ? "public byte[] DynamicData { get; set; }" : string.Empty;
+                    
+                    var writeToJsonMethod = string.Format(writeToJsonMethodTemplate, !isBaseClass ? "override" : "virtual", JsonViewerGenerator.GenerateSerializeJsonContent(context, attributeSymbol, classSymbol));
 
                     var resourceContent = string.Format(autoDeserializeTemplate,
                         namespaceName,
                         classSymbol.Name,
+                        !isBaseClass ? "" : " : IAutoDeserialize",
+                        !isBaseClass ? "override" : "virtual",
                         GenerateDeserializeContent(classSymbol, isDynamic),
-                        classSymbol.BaseType!.Name != "Object" ? "" : " : IAutoDeserialize",
-                        classSymbol.BaseType.Name != "Object" ? "override" : "virtual",
+                        writeToJsonMethod,
                         dynamicFieldContent);
 
-                    context.AddSource($"{namespaceName}.{classSymbol.Name}.AutoDeserialize.g.cs",
-                        SourceText.From(resourceContent, Encoding.UTF8));
-                    
+                    context.AddSource($"{namespaceName}.{classSymbol.Name}.AutoDeserialize.g.cs", SourceText.From(resourceContent, Encoding.UTF8));
+
                     var method = string.Format(arraySegmentExtensionsGenericMethodTemplate, classSymbol.ToDisplayString());
                     stringBuilderArraySegmentGenericMethods.Append(method).AppendLine();
                 }
