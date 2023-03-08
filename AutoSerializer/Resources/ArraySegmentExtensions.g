@@ -4,9 +4,9 @@ using System.Text;
 
 namespace AutoSerializer.Definitions;
 
-public static partial class ArraySegmentExtensions
+public static class {0}
 {{
 
-{0}
+{1}
 
 }} 

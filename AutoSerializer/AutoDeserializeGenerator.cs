@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -33,6 +34,8 @@ namespace AutoSerializer
                 var arraySegmentExtensionsGenericMethodTemplate = AutoSerializerUtils.GetResource(autoSerializerAssembly, context, "ArraySegmentExtensionsGenericMethod");
 
                 var stringBuilderArraySegmentGenericMethods = new StringBuilder();
+                
+                var rgx = new Regex("[^a-zA-Z]");
 
                 foreach (var classSymbol in classes)
                 {
@@ -62,8 +65,8 @@ namespace AutoSerializer
 
                 if (stringBuilderArraySegmentGenericMethods.Length > 0)
                 {
-                    var arraySegmentExtensionsContent = string.Format(arraySegmentExtensionsGenericTemplate, stringBuilderArraySegmentGenericMethods);
-                    context.AddSource("AutoSerializer.Definitions.ArraySegmentExtensions.g.cs", SourceText.From(arraySegmentExtensionsContent, Encoding.UTF8));
+                    var arraySegmentExtensionsContent = string.Format(arraySegmentExtensionsGenericTemplate, $"{rgx.Replace(compilation.AssemblyName!, "")}ArraySegmentExtensions", stringBuilderArraySegmentGenericMethods);
+                    context.AddSource($"{compilation.AssemblyName}.ArraySegmentExtensions.g.cs", SourceText.From(arraySegmentExtensionsContent, Encoding.UTF8));
                 }
             }
             catch (Exception e)
