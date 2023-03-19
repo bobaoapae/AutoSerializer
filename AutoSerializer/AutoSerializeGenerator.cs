@@ -147,15 +147,35 @@ namespace AutoSerializer
                         {
                             var sizeProperty = fieldSymbol.Type is IArrayTypeSymbol ? "Length" : "Count";
                             var genericType = fieldSymbol.Type is IArrayTypeSymbol arrayTypeSymbol ? arrayTypeSymbol.ElementType : ((INamedTypeSymbol)fieldSymbol.Type).TypeArguments.First();
+                            var isGenericEnum = genericType is INamedTypeSymbol { EnumUnderlyingType: { } };
+                            var isGenericObject = !isGenericEnum && (genericType is INamedTypeSymbol { TypeKind: TypeKind.Class } && genericType.ToString() != "string");
+                            var isString = genericType.ToString() == "string";
 
                             builder.Append('\t', tabSpace).AppendLine($"if ({fieldSymbol.Name} == null || {fieldSymbol.Name}.{sizeProperty} < {fixedCount})");
                             builder.Append('\t', tabSpace++).AppendLine("{");
-                            builder.Append('\t', tabSpace).AppendLine($"var trashObjForFixedLen = new {genericType}();");
+
+                            if (isGenericObject)
+                            {
+                                builder.Append('\t', tabSpace).AppendLine($"var trashObjForFixedLen = {genericType}.Create();");
+                            }
+                            else if (isGenericEnum || !isString)
+                            {
+                                builder.Append('\t', tabSpace).AppendLine($"var trashObjForFixedLen = ({genericType})0;");
+                            }
+                            else
+                            {
+                                builder.Append('\t', tabSpace).AppendLine("var trashObjForFixedLen = string.Empty;;");
+                            }
 
                             builder.Append('\t', tabSpace).AppendLine($"for (var i = 0; i < {fixedCount} - ({fieldSymbol.Name}?.{sizeProperty} ?? 0); i++)");
                             builder.Append('\t', tabSpace++).AppendLine("{");
                             builder.Append('\t', tabSpace).AppendLine($"stream.ExWrite(trashObjForFixedLen);");
                             builder.Append('\t', --tabSpace).AppendLine("}");
+
+                            if (isGenericObject)
+                            {
+                                builder.Append('\t', tabSpace).AppendLine($"trashObjForFixedLen.Dispose();");
+                            }
 
                             builder.Append('\t', --tabSpace).AppendLine("}");
                         }

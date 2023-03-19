@@ -15,15 +15,21 @@ public class AutoSerializeIncrementalGenerator : IIncrementalGenerator
                 predicate: static (s, _) => IsSyntaxTargetForGeneration(s),
                 transform: static (ctx, _) => GetSemanticTargetForGeneration(ctx));
 
-        var compilationAndClassesServer = context.CompilationProvider.Combine(classDeclarationsServer.Where(static m => IsNamedTargetForGenerationSerialize(m)).Collect());
+        var compilationAndClassesSerialize = context.CompilationProvider.Combine(classDeclarationsServer.Where(static m => IsNamedTargetForGenerationSerialize(m)).Collect());
 
-        context.RegisterSourceOutput(compilationAndClassesServer,
+        context.RegisterSourceOutput(compilationAndClassesSerialize,
             static (spc, source) => AutoSerializeGenerator.Generate(source.Item1, source.Item2, spc));
 
-        var compilationAndClassesClient = context.CompilationProvider.Combine(classDeclarationsServer.Where(static m => IsNamedTargetForGenerationDeserialize(m)).Collect());
+        var compilationAndClassesDeserialize = context.CompilationProvider.Combine(classDeclarationsServer.Where(static m => IsNamedTargetForGenerationDeserialize(m)).Collect());
 
-        context.RegisterSourceOutput(compilationAndClassesClient,
+        context.RegisterSourceOutput(compilationAndClassesDeserialize,
             static (spc, source) => AutoDeserializeGenerator.Generate(source.Item1, source.Item2, spc));
+        
+        var compilationAndClassesBoth = context.CompilationProvider.Combine(classDeclarationsServer.Where(static m => IsNamedTargetForGenerationSerialize(m) || IsNamedTargetForGenerationDeserialize(m)).Collect());
+        
+        context.RegisterSourceOutput(compilationAndClassesBoth,
+            static (spc, source) => AutoPooledGenerator.Generate(source.Item1, source.Item2, spc));
+        
     }
 
     private static bool IsSyntaxTargetForGeneration(SyntaxNode node)

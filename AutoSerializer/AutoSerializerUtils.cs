@@ -32,21 +32,21 @@ public static class AutoSerializerUtils
 
         return false;
     }
-    
+
     public static bool IsBothAutoSerializeAndDeserialize(ITypeSymbol typeSymbol)
     {
-        if (typeSymbol is not INamedTypeSymbol namedTypeSymbol) 
+        if (typeSymbol is not INamedTypeSymbol namedTypeSymbol)
             return false;
         return namedTypeSymbol.GetAttributes()
             .Any(symbol => symbol.AttributeClass?.Name is "AutoSerializeAttribute") && namedTypeSymbol
             .GetAttributes().Any(symbol => symbol.AttributeClass?.Name is "AutoDeserializeAttribute");
     }
-    
+
     public static bool CheckClassIsPartial(INamedTypeSymbol namedTypeSymbol)
     {
         foreach (var declaringSyntaxReference in namedTypeSymbol.DeclaringSyntaxReferences)
         {
-            if (CheckClassIsPartial((ClassDeclarationSyntax) declaringSyntaxReference.GetSyntax()))
+            if (CheckClassIsPartial((ClassDeclarationSyntax)declaringSyntaxReference.GetSyntax()))
                 return true;
         }
 
@@ -57,7 +57,7 @@ public static class AutoSerializerUtils
     {
         foreach (var declaringSyntaxReference in namedTypeSymbol.DeclaringSyntaxReferences)
         {
-            if (CheckClassIsPublic((ClassDeclarationSyntax) declaringSyntaxReference.GetSyntax()))
+            if (CheckClassIsPublic((ClassDeclarationSyntax)declaringSyntaxReference.GetSyntax()))
                 return true;
         }
 
@@ -76,26 +76,29 @@ public static class AutoSerializerUtils
 
     public static bool IsList(ITypeSymbol typeSymbol)
     {
-        return typeSymbol.AllInterfaces.Any(symbol => symbol.Name == "ICollection" || symbol.Name == "IReadOnlyCollection`1");
+        return typeSymbol.AllInterfaces.Any(symbol => symbol.Name == "IList");
     }
-    
+
+    public static bool IsPooledList(ITypeSymbol typeSymbol)
+    {
+        return typeSymbol.Name == "PooledList";
+    }
+
     public static string GetResource(Assembly assembly, SourceProductionContext context, string resourceName)
     {
-        using (var resourceStream = assembly.GetManifestResourceStream($"AutoSerializer.Resources.{resourceName}.g"))
-        {
-            if (resourceStream != null)
-                return new StreamReader(resourceStream).ReadToEnd();
+        using var resourceStream = assembly.GetManifestResourceStream($"AutoSerializer.Resources.{resourceName}.g");
+        if (resourceStream != null)
+            return new StreamReader(resourceStream).ReadToEnd();
 
-            context.ReportDiagnostic(Diagnostic.Create(
-                new DiagnosticDescriptor(
-                    "ADG0001",
-                    "Invalid Resource",
-                    $"Cannot find {resourceName}.g resource",
-                    "",
-                    DiagnosticSeverity.Error,
-                    true),
-                null));
-            return "";
-        }
+        context.ReportDiagnostic(Diagnostic.Create(
+            new DiagnosticDescriptor(
+                "ADG0001",
+                "Invalid Resource",
+                $"Cannot find {resourceName}.g resource",
+                "",
+                DiagnosticSeverity.Error,
+                true),
+            null));
+        return "";
     }
 }
