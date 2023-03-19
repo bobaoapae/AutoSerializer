@@ -6,8 +6,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="AutoSerializer" Version="2.0.7" />
-      <PackageReference Include="AutoSerializer.Definitions" Version="1.2.8" />
+      <ProjectReference Include="..\AutoSerializer.Definitions\AutoSerializer.Definitions.csproj" />
+      <ProjectReference Include="..\AutoSerializer\AutoSerializer.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
 
 </Project>
