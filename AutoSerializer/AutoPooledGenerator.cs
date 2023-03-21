@@ -70,7 +70,7 @@ namespace AutoSerializer
 
             foreach (var item in classSymbol.GetMembers())
             {
-                if (item is IPropertySymbol itemProperty && itemProperty.DeclaredAccessibility == Accessibility.Public && itemProperty.SetMethod != null)
+                if (item is IPropertySymbol itemProperty && itemProperty.DeclaredAccessibility == Accessibility.Public)
                 {
                     if (AutoSerializerUtils.IsPooledList(itemProperty.Type))
                     {
@@ -90,7 +90,7 @@ namespace AutoSerializer
             var fieldSymbols = new List<IPropertySymbol>();
             foreach (var item in symbol.GetMembers())
             {
-                if (item is IPropertySymbol itemProperty && itemProperty.DeclaredAccessibility == Accessibility.Public && itemProperty.SetMethod != null)
+                if (item is IPropertySymbol itemProperty && itemProperty.DeclaredAccessibility == Accessibility.Public)
                 {
                     fieldSymbols.Add(itemProperty);
                 }
