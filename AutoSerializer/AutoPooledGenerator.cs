@@ -67,7 +67,7 @@ namespace AutoSerializer
         private static string GenerateInitializePooledLists(SourceProductionContext context, INamedTypeSymbol classSymbol)
         {
             var builder = new StringBuilder();
-
+            
             if (classSymbol.BaseType!.Name != "Object")
             {
                 builder.Append('\t', 3).AppendLine("base.Initialize();").AppendLine();
@@ -80,12 +80,7 @@ namespace AutoSerializer
                     if (AutoSerializerUtils.IsPooledList(itemProperty.Type))
                     {
                         var genericType = ((INamedTypeSymbol)itemProperty.Type).TypeArguments.First();
-                        var isGenericEnum = genericType is INamedTypeSymbol { EnumUnderlyingType: { } };
-                        var isGenericObject = !isGenericEnum && (genericType is INamedTypeSymbol { TypeKind: TypeKind.Class } && genericType.ToString() != "string");
-                        if(isGenericObject)
-                            builder.Append('\t', 3).AppendLine($"{itemProperty.Name} = {genericType}.CreateList();");
-                        else
-                            builder.Append('\t', 3).AppendLine($"{itemProperty.Name} = ArraySegmentExtensions.GetList{AutoSerializerUtils.Capitalize(genericType.ToDisplayString())}();");
+                        builder.Append('\t', 3).AppendLine($"{itemProperty.Name} = new Collections.Pooled.PooledList<{genericType}>();");
                     }
                 }
             }
@@ -140,14 +135,8 @@ namespace AutoSerializer
 
                     if (AutoSerializerUtils.IsPooledList(fieldSymbol.Type))
                     {
-                        if (isGenericObject)
-                        {
-                            builder.Append('\t', 3).AppendLine($"{genericType}.ReturnList({fieldSymbol.Name});");
-                        }
-                        else
-                        {
-                            builder.Append('\t', 3).AppendLine($"ArraySegmentExtensions.ReturnList({fieldSymbol.Name});");
-                        }
+                        builder.Append('\t', 3).AppendLine($"{fieldSymbol.Name}?.Clear();");
+                        builder.Append('\t', 3).AppendLine($"{fieldSymbol.Name}?.Dispose();");
                     }
                 }
                 else if (isObject)

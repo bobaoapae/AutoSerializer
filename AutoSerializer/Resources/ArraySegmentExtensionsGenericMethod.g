@@ -17,7 +17,7 @@ public static void Read(this ArraySegment<byte> buffer, ref int offset, in int s
 
 public static void Read(this ArraySegment<byte> buffer, ref int offset, in int size, out Collections.Pooled.PooledList<{0}> value)
 {{
-    value = {0}.CreateList();
+    value = new Collections.Pooled.PooledList<{0}>(size);
     for (var i = 0; i < size; i++)
     {{
         buffer.Read(ref offset, out {0} val);

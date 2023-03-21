@@ -83,13 +83,6 @@ public static class AutoSerializerUtils
     {
         return typeSymbol.Name == "PooledList";
     }
-    
-    public static string Capitalize(string s)
-    {
-        if (string.IsNullOrEmpty(s))
-            return s;
-        return char.ToUpper(s[0]) + s.Substring(1);
-    }
 
     public static string GetResource(Assembly assembly, SourceProductionContext context, string resourceName)
     {

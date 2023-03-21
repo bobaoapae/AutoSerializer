@@ -1,144 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Collections.Pooled;
-using Microsoft.Extensions.ObjectPool;
 
 namespace AutoSerializer.Definitions
 {
     public static class ArraySegmentExtensions
     {
-        private static ObjectPool<PooledList<byte>> _listBytePool = new DefaultObjectPool<PooledList<byte>>(new DefaultPooledObjectPolicy<PooledList<byte>>());
-        private static ObjectPool<PooledList<sbyte>> _listSBytePool = new DefaultObjectPool<PooledList<sbyte>>(new DefaultPooledObjectPolicy<PooledList<sbyte>>());
-        private static ObjectPool<PooledList<short>> _listShortPool = new DefaultObjectPool<PooledList<short>>(new DefaultPooledObjectPolicy<PooledList<short>>());
-        private static ObjectPool<PooledList<ushort>> _listUShortPool = new DefaultObjectPool<PooledList<ushort>>(new DefaultPooledObjectPolicy<PooledList<ushort>>());
-        private static ObjectPool<PooledList<int>> _listIntPool = new DefaultObjectPool<PooledList<int>>(new DefaultPooledObjectPolicy<PooledList<int>>());
-        private static ObjectPool<PooledList<uint>> _listUIntPool = new DefaultObjectPool<PooledList<uint>>(new DefaultPooledObjectPolicy<PooledList<uint>>());
-        private static ObjectPool<PooledList<long>> _listLongPool = new DefaultObjectPool<PooledList<long>>(new DefaultPooledObjectPolicy<PooledList<long>>());
-        private static ObjectPool<PooledList<ulong>> _listULongPool = new DefaultObjectPool<PooledList<ulong>>(new DefaultPooledObjectPolicy<PooledList<ulong>>());
-        private static ObjectPool<PooledList<float>> _listFloatPool = new DefaultObjectPool<PooledList<float>>(new DefaultPooledObjectPolicy<PooledList<float>>());
-        private static ObjectPool<PooledList<string>> _listStringPool = new DefaultObjectPool<PooledList<string>>(new DefaultPooledObjectPolicy<PooledList<string>>());
-
-        public static void ReturnList(PooledList<byte> list)
-        {
-            list.Clear();
-            list.Dispose();
-            _listBytePool.Return(list);
-        }
-
-        public static void ReturnList(PooledList<sbyte> list)
-        {
-            list.Clear();
-            list.Dispose();
-            _listSBytePool.Return(list);
-        }
-
-        public static void ReturnList(PooledList<short> list)
-        {
-            list.Clear();
-            list.Dispose();
-            _listShortPool.Return(list);
-        }
-
-        public static void ReturnList(PooledList<ushort> list)
-        {
-            list.Clear();
-            list.Dispose();
-            _listUShortPool.Return(list);
-        }
-
-        public static void ReturnList(PooledList<int> list)
-        {
-            list.Clear();
-            list.Dispose();
-            _listIntPool.Return(list);
-        }
-
-        public static void ReturnList(PooledList<uint> list)
-        {
-            list.Clear();
-            list.Dispose();
-            _listUIntPool.Return(list);
-        }
-
-        public static void ReturnList(PooledList<long> list)
-        {
-            list.Clear();
-            list.Dispose();
-            _listLongPool.Return(list);
-        }
-
-        public static void ReturnList(PooledList<ulong> list)
-        {
-            list.Clear();
-            list.Dispose();
-            _listULongPool.Return(list);
-        }
-        
-        public static void ReturnList(PooledList<float> list)
-        {
-            list.Clear();
-            list.Dispose();
-            _listFloatPool.Return(list);
-        }
-
-        public static void ReturnList(PooledList<string> list)
-        {
-            list.Clear();
-            list.Dispose();
-            _listStringPool.Return(list);
-        }
-        
-        public static PooledList<byte> GetListByte()
-        {
-            return _listBytePool.Get();
-        }
-        
-        public static PooledList<sbyte> GetListSbyte()
-        {
-            return _listSBytePool.Get();
-        }
-        
-        public static PooledList<short> GetListShort()
-        {
-            return _listShortPool.Get();
-        }
-        
-        public static PooledList<ushort> GetListUshort()
-        {
-            return _listUShortPool.Get();
-        }
-        
-        public static PooledList<int> GetListInt()
-        {
-            return _listIntPool.Get();
-        }
-        
-        public static PooledList<uint> GetListUint()
-        {
-            return _listUIntPool.Get();
-        }
-        
-        public static PooledList<long> GetListLong()
-        {
-            return _listLongPool.Get();
-        }
-        
-        public static PooledList<ulong> GetListUlong()
-        {
-            return _listULongPool.Get();
-        }
-        
-        public static PooledList<float> GetListFloat()
-        {
-            return _listFloatPool.Get();
-        }
-        
-        public static PooledList<string> GetListString()
-        {
-            return _listStringPool.Get();
-        }
-
         public static void Read(this ArraySegment<byte> buffer, ref int offset, out bool value)
         {
             value = buffer.Array![offset++] == 1;
@@ -432,10 +299,10 @@ namespace AutoSerializer.Definitions
                 value.Add(val);
             }
         }
-
+        
         public static void Read(this ArraySegment<byte> buffer, ref int offset, in int size, out Collections.Pooled.PooledList<byte> value)
         {
-            value = _listBytePool.Get();
+            value = new Collections.Pooled.PooledList<byte>(size);
             for (var i = 0; i < size; i++)
             {
                 buffer.Read(ref offset, out byte val);
@@ -445,7 +312,7 @@ namespace AutoSerializer.Definitions
 
         public static void Read(this ArraySegment<byte> buffer, ref int offset, in int size, out Collections.Pooled.PooledList<sbyte> value)
         {
-            value = _listSBytePool.Get();
+            value = new Collections.Pooled.PooledList<sbyte>(size);
             for (var i = 0; i < size; i++)
             {
                 buffer.Read(ref offset, out sbyte val);
@@ -455,7 +322,7 @@ namespace AutoSerializer.Definitions
 
         public static void Read(this ArraySegment<byte> buffer, ref int offset, in int size, out Collections.Pooled.PooledList<int> value)
         {
-            value = _listIntPool.Get();
+            value = new Collections.Pooled.PooledList<int>(size);
             for (var i = 0; i < size; i++)
             {
                 buffer.Read(ref offset, out int val);
@@ -465,7 +332,7 @@ namespace AutoSerializer.Definitions
 
         public static void Read(this ArraySegment<byte> buffer, ref int offset, in int size, out Collections.Pooled.PooledList<uint> value)
         {
-            value = _listUIntPool.Get();
+            value = new Collections.Pooled.PooledList<uint>(size);
             for (var i = 0; i < size; i++)
             {
                 buffer.Read(ref offset, out uint val);
@@ -475,7 +342,7 @@ namespace AutoSerializer.Definitions
 
         public static void Read(this ArraySegment<byte> buffer, ref int offset, in int size, out Collections.Pooled.PooledList<short> value)
         {
-            value = _listShortPool.Get();
+            value = new Collections.Pooled.PooledList<short>(size);
             for (var i = 0; i < size; i++)
             {
                 buffer.Read(ref offset, out short val);
@@ -485,7 +352,7 @@ namespace AutoSerializer.Definitions
 
         public static void Read(this ArraySegment<byte> buffer, ref int offset, in int size, out Collections.Pooled.PooledList<ushort> value)
         {
-            value = _listUShortPool.Get();
+            value = new Collections.Pooled.PooledList<ushort>(size);
             for (var i = 0; i < size; i++)
             {
                 buffer.Read(ref offset, out ushort val);
@@ -495,7 +362,7 @@ namespace AutoSerializer.Definitions
 
         public static void Read(this ArraySegment<byte> buffer, ref int offset, in int size, out Collections.Pooled.PooledList<long> value)
         {
-            value = _listLongPool.Get();
+            value = new Collections.Pooled.PooledList<long>(size);
             for (var i = 0; i < size; i++)
             {
                 buffer.Read(ref offset, out long val);
@@ -505,7 +372,7 @@ namespace AutoSerializer.Definitions
 
         public static void Read(this ArraySegment<byte> buffer, ref int offset, in int size, out Collections.Pooled.PooledList<ulong> value)
         {
-            value = _listULongPool.Get();
+            value = new Collections.Pooled.PooledList<ulong>(size);
             for (var i = 0; i < size; i++)
             {
                 buffer.Read(ref offset, out ulong val);
@@ -515,7 +382,7 @@ namespace AutoSerializer.Definitions
 
         public static void Read(this ArraySegment<byte> buffer, ref int offset, in int size, out Collections.Pooled.PooledList<float> value)
         {
-            value = _listFloatPool.Get();
+            value = new Collections.Pooled.PooledList<float>(size);
             for (var i = 0; i < size; i++)
             {
                 buffer.Read(ref offset, out float val);
@@ -525,7 +392,7 @@ namespace AutoSerializer.Definitions
 
         public static void Read(this ArraySegment<byte> buffer, ref int offset, in int size, out Collections.Pooled.PooledList<string> value)
         {
-            value = _listStringPool.Get();
+            value = new Collections.Pooled.PooledList<string>(size);
             for (var i = 0; i < size; i++)
             {
                 buffer.Read(ref offset, out int strLen);
