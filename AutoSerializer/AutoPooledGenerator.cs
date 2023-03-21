@@ -67,7 +67,7 @@ namespace AutoSerializer
         private static string GenerateInitializePooledLists(SourceProductionContext context, INamedTypeSymbol classSymbol)
         {
             var builder = new StringBuilder();
-            
+
             if (classSymbol.BaseType!.Name != "Object")
             {
                 builder.Append('\t', 3).AppendLine("base.Initialize();").AppendLine();
@@ -80,7 +80,12 @@ namespace AutoSerializer
                     if (AutoSerializerUtils.IsPooledList(itemProperty.Type))
                     {
                         var genericType = ((INamedTypeSymbol)itemProperty.Type).TypeArguments.First();
-                        builder.Append('\t', 3).AppendLine($"{itemProperty.Name} = new Collections.Pooled.PooledList<{genericType}>();");
+                        var isGenericEnum = genericType is INamedTypeSymbol { EnumUnderlyingType: { } };
+                        var isGenericObject = !isGenericEnum && (genericType is INamedTypeSymbol { TypeKind: TypeKind.Class } && genericType.ToString() != "string");
+                        if(isGenericObject)
+                            builder.Append('\t', 3).AppendLine($"{itemProperty.Name} = {genericType}.CreateList();");
+                        else
+                            builder.Append('\t', 3).AppendLine($"{itemProperty.Name} = ArraySegmentExtensions.GetList{AutoSerializerUtils.Capitalize(genericType.ToDisplayString())}();");
                     }
                 }
             }
@@ -135,8 +140,14 @@ namespace AutoSerializer
 
                     if (AutoSerializerUtils.IsPooledList(fieldSymbol.Type))
                     {
-                        builder.Append('\t', 3).AppendLine($"{fieldSymbol.Name}?.Clear();");
-                        builder.Append('\t', 3).AppendLine($"{fieldSymbol.Name}?.Dispose();");
+                        if (isGenericObject)
+                        {
+                            builder.Append('\t', 3).AppendLine($"{genericType}.ReturnList({fieldSymbol.Name});");
+                        }
+                        else
+                        {
+                            builder.Append('\t', 3).AppendLine($"ArraySegmentExtensions.ReturnList({fieldSymbol.Name});");
+                        }
                     }
                 }
                 else if (isObject)
