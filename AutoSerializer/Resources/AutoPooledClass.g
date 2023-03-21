@@ -9,25 +9,23 @@ namespace {0}
     public partial class {1}{2}
     {{
 
-        private static ObjectPool<{1}> _objectPool = new DefaultObjectPool<{1}>(new PooledPolicy<{1}>());
+        private static ObjectPool<{1}> _objectPool = new DefaultObjectPool<{1}>(new DefaultPooledObjectPolicy<{1}>());
 
         public {4} static {1} Create()
         {{
-            var obj = _objectPool.Get();
-            obj.Initialize();
-            return obj;
+            return _objectPool.Get();
         }}
 
         private bool _disposedValue;
 
-        public {3} void Initialize()
+        public {1}()
         {{
 {5}
         }}
 
 #region Dispose
 
-        public {3} void CleanObject() 
+        protected {3} void CleanObject() 
         {{
 {6}
         }}

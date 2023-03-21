@@ -39,7 +39,7 @@ namespace AutoSerializer
                     var pooledClassContent = string.Format(autoPooledClass,
                         namespaceName,
                         classSymbol.Name,
-                        $" : IAutoPooled<{classSymbol.Name}>",
+                        !isBaseClass ? "" : " : IDisposable",
                         overrideOrVirtual,
                         @new,
                         GenerateInitializePooledLists(context, classSymbol),
@@ -67,11 +67,6 @@ namespace AutoSerializer
         private static string GenerateInitializePooledLists(SourceProductionContext context, INamedTypeSymbol classSymbol)
         {
             var builder = new StringBuilder();
-            
-            if (classSymbol.BaseType!.Name != "Object")
-            {
-                builder.Append('\t', 3).AppendLine("base.Initialize();").AppendLine();
-            }
 
             foreach (var item in classSymbol.GetMembers())
             {
