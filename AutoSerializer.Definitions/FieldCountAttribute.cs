@@ -2,19 +2,28 @@
 
 namespace AutoSerializer.Definitions
 {
-    [AttributeUsage(AttributeTargets.Property)]
+    [AttributeUsage(AttributeTargets.Field)]
     public class FieldCountAttribute : Attribute
     {
-        public string Value { get; }
+        public string CurCount { get; }
+        public int MaxCount { get; }
 
-        public FieldCountAttribute(int value)
+        public FieldCountAttribute(string curCount, int maxCount)
         {
-            Value = value.ToString();
+            CurCount = curCount;
+            MaxCount = maxCount;
         }
 
-        public FieldCountAttribute(string value)
+        public FieldCountAttribute(int curCount, int maxCount)
         {
-            Value = value;
+            CurCount = curCount.ToString();
+            MaxCount = maxCount;
+        }
+
+        public FieldCountAttribute(string curCount)
+        {
+            CurCount = curCount;
+            MaxCount = 0;
         }
     }
 }

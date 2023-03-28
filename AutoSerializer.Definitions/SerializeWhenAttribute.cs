@@ -2,7 +2,7 @@
 
 namespace AutoSerializer.Definitions
 {
-    [AttributeUsage(AttributeTargets.Property)]
+    [AttributeUsage(AttributeTargets.Field)]
     public class SerializeWhenAttribute : Attribute
     {
         public string Value { get; }

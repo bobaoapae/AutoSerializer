@@ -1,10 +1,11 @@
 ﻿using System;
-using Newtonsoft.Json.Linq;
 
 namespace AutoSerializer.Definitions
 {
-    public interface IAutoDeserialize
+    public unsafe interface IAutoDeserialize<out T> where T : struct, IAutoDeserialize<T>
     {
-        void Deserialize(in ArraySegment<byte> buffer, ref int offset);
+        static abstract T Deserialize(ref byte* bytePtr);
+        static abstract T Deserialize(ArraySegment<byte> data);
+        static abstract T Deserialize(Span<byte> data);
     }
 }

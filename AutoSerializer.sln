@@ -4,6 +4,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoSerializer", "AutoSeria
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoSerializer.Definitions", "AutoSerializer.Definitions\AutoSerializer.Definitions.csproj", "{069D8499-05BB-42FF-9F7E-4333AADBF4AF}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{021F55A7-6CD4-431E-BA39-541734F6DE6D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoSerializer.Samples", "Samples\AutoSerializer.Samples\AutoSerializer.Samples.csproj", "{FF281EB6-D060-4034-AFAD-1FA269D86ECC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +22,12 @@ Global
 		{069D8499-05BB-42FF-9F7E-4333AADBF4AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{069D8499-05BB-42FF-9F7E-4333AADBF4AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{069D8499-05BB-42FF-9F7E-4333AADBF4AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FF281EB6-D060-4034-AFAD-1FA269D86ECC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF281EB6-D060-4034-AFAD-1FA269D86ECC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF281EB6-D060-4034-AFAD-1FA269D86ECC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF281EB6-D060-4034-AFAD-1FA269D86ECC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FF281EB6-D060-4034-AFAD-1FA269D86ECC} = {021F55A7-6CD4-431E-BA39-541734F6DE6D}
 	EndGlobalSection
 EndGlobal

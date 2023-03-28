@@ -2,17 +2,17 @@
 
 namespace AutoSerializer.Definitions
 {
-    [AttributeUsage(AttributeTargets.Property)]
-    public class FieldLengthAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Field)]
+    public class FixedFieldLengthAttribute : Attribute
     {
         public string Value { get; }
 
-        public FieldLengthAttribute(int value)
+        public FixedFieldLengthAttribute(int value)
         {
             Value = value.ToString();
         }
 
-        public FieldLengthAttribute(string value)
+        public FixedFieldLengthAttribute(string value)
         {
             Value = value;
         }

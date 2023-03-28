@@ -5,7 +5,8 @@
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
         <RepositoryUrl>https://github.com/project-nevareth/AutoSerializer</RepositoryUrl>
         <PackageProjectUrl>https://github.com/project-nevareth/AutoSerializer</PackageProjectUrl>
-        <Version>3.0.0</Version>
+        <IsRoslynComponent>true</IsRoslynComponent>
+        <Version>4.0.0</Version>
         <LangVersion>default</LangVersion>
     </PropertyGroup>
 
