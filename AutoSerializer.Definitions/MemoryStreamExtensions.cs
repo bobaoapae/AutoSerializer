@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace AutoSerializer.Definitions
@@ -82,12 +83,24 @@ namespace AutoSerializer.Definitions
 
         public static void ExWrite(this MemoryStream stream, in float value)
         {
-            var src = BitConverter.GetBytes(value);
+            var intValue = Unsafe.As<float, int>(ref Unsafe.AsRef(value));
 
-            if (!BitConverter.IsLittleEndian)
-                Array.Reverse(src);
-
-            stream.Write(src, 0, src.Length);
+            if (BitConverter.IsLittleEndian)
+            {
+                for (var i = 0; i < 4; i++)
+                {
+                    var byteValue = (byte)((intValue >> (i * 8)) & 0xFF);
+                    stream.WriteByte(byteValue);
+                }
+            }
+            else
+            {
+                for (var i = 3; i >= 0; i--)
+                {
+                    var byteValue = (byte)((intValue >> (i * 8)) & 0xFF);
+                    stream.WriteByte(byteValue);
+                }
+            }
         }
 
         public static void ExWrite(this MemoryStream stream, DateTimeOffset dateTimeOffset)
