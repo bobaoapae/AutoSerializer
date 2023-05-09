@@ -78,7 +78,12 @@ public static class AutoSerializerUtils
     {
         return typeSymbol.AllInterfaces.Any(symbol => symbol.Name == "ICollection" || symbol.Name == "IReadOnlyCollection`1");
     }
-    
+
+    public static bool IsMemory(ITypeSymbol fieldSymbolType)
+    {
+        return fieldSymbolType.Name == "Memory`1";
+    }
+
     public static string GetResource(Assembly assembly, SourceProductionContext context, string resourceName)
     {
         using (var resourceStream = assembly.GetManifestResourceStream($"AutoSerializer.Resources.{resourceName}.g"))

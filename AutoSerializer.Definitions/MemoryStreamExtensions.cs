@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -171,6 +172,14 @@ namespace AutoSerializer.Definitions
             }
 
             foreach (var s in value)
+            {
+                stream.ExWrite(s);
+            }
+        }
+
+        public static void ExWrite(this MemoryStream stream, Memory<byte> value)
+        {
+            foreach (var s in value.Span)
             {
                 stream.ExWrite(s);
             }
