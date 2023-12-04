@@ -149,10 +149,14 @@ namespace AutoSerializer
                     }
                 }
 
-                if (fieldSymbol.Type is INamedTypeSymbol { EnumUnderlyingType: { } } nameSymbol)
+                if (fieldSymbol.Type is INamedTypeSymbol { EnumUnderlyingType: not null } nameSymbol)
                 {
                     builder.Append('\t', tabSpace).AppendLine($"buffer.Read(ref offset, out {nameSymbol.EnumUnderlyingType} read_{fieldSymbol.Name});");
                     builder.Append('\t', tabSpace).AppendLine($"{fieldSymbol.Name} = ({fieldSymbol.Type})read_{fieldSymbol.Name};");
+                    builder.Append('\t', tabSpace).AppendLine($"if(!Enum.IsDefined({fieldSymbol.Name}))");
+                    tabSpace++;
+                    builder.Append('\t',tabSpace).AppendLine($$"""throw new Exception($"Error deserializing field {{fieldSymbol.Name}} of type {{fieldSymbol.Type.Name}} in class {{symbol.Name}}. Invalid Enum value {read_{{fieldSymbol.Name}}}");""");
+                    tabSpace--;
                 }
                 else
                 {
