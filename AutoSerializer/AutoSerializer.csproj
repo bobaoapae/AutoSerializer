@@ -5,7 +5,7 @@
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
         <RepositoryUrl>https://github.com/project-nevareth/AutoSerializer</RepositoryUrl>
         <PackageProjectUrl>https://github.com/project-nevareth/AutoSerializer</PackageProjectUrl>
-        <Version>3.0.5</Version>
+        <Version>3.0.6</Version>
         <LangVersion>default</LangVersion>
     </PropertyGroup>
 
