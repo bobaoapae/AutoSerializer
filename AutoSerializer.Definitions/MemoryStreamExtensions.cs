@@ -147,6 +147,7 @@ namespace AutoSerializer.Definitions
 
             foreach (var s in value)
             {
+                stream.ExWrite(Encoding.UTF8.GetByteCount(s));
                 stream.ExWrite(s);
             }
         }
@@ -298,6 +299,7 @@ namespace AutoSerializer.Definitions
 
             foreach (var s in value)
             {
+                stream.ExWrite(Encoding.UTF8.GetByteCount(s));
                 stream.ExWrite(s);
             }
         }
