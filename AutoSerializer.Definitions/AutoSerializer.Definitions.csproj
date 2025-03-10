@@ -5,7 +5,7 @@
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
         <RepositoryUrl>https://github.com/bobaoapae/AutoSerializer</RepositoryUrl>
         <PackageProjectUrl>https://github.com/bobaoapae/AutoSerializer</PackageProjectUrl>
-        <Version>3.0.6</Version>
+        <Version>3.0.7</Version>
         <LangVersion>latest</LangVersion>
     </PropertyGroup>
 
